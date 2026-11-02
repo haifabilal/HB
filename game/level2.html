@@ -1,958 +1,264 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>HB Battle Royale - Modern City</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HB Battle Royale</title>
 <style>
-* {
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
-}
-
-body {
-  margin: 0;
-  overflow: hidden;
-  background: #91adbd;
-  font-family: Arial, sans-serif;
-  touch-action: none;
-}
-
-canvas {
-  display: block;
-}
-
-#loading {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  background: #172431;
-  font-size: 19px;
-}
-
-#hud {
-  position: fixed;
-  top: 12px;
-  left: 12px;
-  z-index: 5;
-  color: white;
-  text-shadow: 0 2px 5px #000;
-  pointer-events: none;
-}
-
-#title {
-  font-size: 18px;
-  font-weight: bold;
-  letter-spacing: 2px;
-}
-
-#subtitle {
-  font-size: 10px;
-  margin-top: 5px;
-  color: #dce8ed;
-}
-
-#location {
-  font-size: 11px;
-  margin-top: 7px;
-}
-
-#controls {
-  position: fixed;
-  inset: 0;
-  z-index: 10;
-  pointer-events: none;
-}
-
-.control {
-  position: absolute;
-  bottom: 22px;
-  width: 65px;
-  height: 65px;
-  border: 2px solid rgba(255,255,255,.75);
-  border-radius: 17px;
-  background: rgba(15,25,35,.62);
-  color: white;
-  font-size: 30px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: auto;
-  touch-action: none;
-  user-select: none;
-}
-
-.control.pressed {
-  background: rgba(65,130,175,.9);
-  transform: scale(.94);
-}
-
-#forward {
-  left: 22px;
-  bottom: 96px;
-}
-
-#backward {
-  left: 22px;
-}
-
-#left {
-  right: 99px;
-}
-
-#right {
-  right: 22px;
-}
-
-#fullscreen {
-  position: fixed;
-  top: 12px;
-  right: 12px;
-  z-index: 15;
-  padding: 9px 12px;
-  border: 1px solid white;
-  border-radius: 8px;
-  color: white;
-  background: rgba(0,0,0,.55);
-}
-
-#rotate {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 25px;
-  color: white;
-  background: #172431;
-  font-size: 21px;
-}
-
-@media (orientation: portrait) {
-  #rotate {
-    display: flex;
-  }
-}
+*{box-sizing:border-box}
+body{margin:0;overflow:hidden;background:#101820;font-family:Arial;color:white}
+#game{display:block;width:100vw;height:100vh}
+#loading{position:fixed;inset:0;background:#101820;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:10;text-align:center;padding:25px}
+#loading h2{color:#f5c542}
+#controls{position:fixed;inset:0;pointer-events:none}
+.pad{position:absolute;bottom:25px;display:flex;gap:12px;pointer-events:auto}
+#leftPad{left:18px}
+#rightPad{right:18px}
+.control{width:68px;height:68px;border:2px solid #ffffffaa;border-radius:16px;background:#172b3dcc;color:white;font-size:27px;font-weight:bold;touch-action:none}
+#top{position:absolute;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:center;pointer-events:auto}
+#top button{background:#172b3dcc;color:white;border:1px solid white;border-radius:9px;padding:10px}
+#title{font-weight:bold;color:#f5c542;text-shadow:1px 1px 3px black}
+#hint{position:absolute;top:48px;left:12px;font-size:12px;text-shadow:1px 1px 3px black}
+@media (orientation:portrait){#rotate{display:block}}
+#rotate{display:none;position:fixed;bottom:110px;left:0;right:0;text-align:center;color:white;font-size:13px;text-shadow:1px 1px 3px black;pointer-events:none}
 </style>
 </head>
-
 <body>
-
-<div id="loading">Loading HB Modern City...</div>
-
-<div id="hud">
-  <div id="title">HB BATTLE ROYALE</div>
-  <div id="subtitle">MODERN CITY • OPEN WORLD</div>
-  <div id="location">DOWNTOWN DISTRICT</div>
-</div>
-
-<button id="fullscreen">⛶ FULLSCREEN</button>
+<div id="loading"><h2>HB BATTLE ROYALE</h2><p id="loadText">Loading city...</p></div>
+<canvas id="game"></canvas>
 
 <div id="controls">
-  <button class="control" id="forward">↑</button>
-  <button class="control" id="backward">↓</button>
-  <button class="control" id="left">↶</button>
-  <button class="control" id="right">↷</button>
-</div>
-
-<div id="rotate">
-  Please rotate your phone horizontally to play.
+  <div id="top">
+    <span id="title">HB BATTLE ROYALE</span>
+    <button id="full">FULL SCREEN</button>
+  </div>
+  <div id="hint">Move and explore the city</div>
+  <div id="leftPad" class="pad">
+    <button class="control" id="forward">↑</button>
+    <button class="control" id="backward">↓</button>
+  </div>
+  <div id="rightPad" class="pad">
+    <button class="control" id="turnLeft">↶</button>
+    <button class="control" id="turnRight">↷</button>
+  </div>
+  <div id="rotate">For the best view, turn your phone sideways.</div>
 </div>
 
 <script type="module">
-import * as THREE from
-"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+const loadText = document.getElementById("loadText");
+function showError(message){
+  document.getElementById("loading").style.display="flex";
+  loadText.textContent="Could not load: "+message;
+}
+try {
+  const THREE = await import("https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js");
 
-/* =========================
-   MAIN SCENE
-========================= */
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x87b8d8);
+  scene.fog = new THREE.Fog(0x87b8d8, 100, 260);
 
-const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(65,innerWidth/innerHeight,0.1,500);
+  const renderer = new THREE.WebGLRenderer({
+    canvas:document.getElementById("game"),
+    antialias:false,
+    powerPreference:"low-power"
+  });
+  renderer.setSize(innerWidth,innerHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio,1.25));
+  renderer.outputColorSpace=THREE.SRGBColorSpace;
 
-scene.background = new THREE.Color(0x9bb9c9);
-scene.fog = new THREE.Fog(0x9bb9c9, 115, 330);
+  scene.add(new THREE.HemisphereLight(0xffffff,0x526044,2));
+  const sun=new THREE.DirectionalLight(0xffffff,1.5);
+  sun.position.set(60,100,40);
+  scene.add(sun);
 
-const camera = new THREE.PerspectiveCamera(
-  65,
-  innerWidth / innerHeight,
-  0.1,
-  600
-);
+  const ground=new THREE.Mesh(
+    new THREE.PlaneGeometry(280,280),
+    new THREE.MeshLambertMaterial({color:0x56794b})
+  );
+  ground.rotation.x=-Math.PI/2;
+  ground.position.y=-0.1;
+  scene.add(ground);
 
-const renderer = new THREE.WebGLRenderer({
-  antialias: true,
-  powerPreference: "high-performance"
-});
+  // Roads
+  const roadMat=new THREE.MeshLambertMaterial({color:0x30343a});
+  const lineMat=new THREE.MeshBasicMaterial({color:0xe7dfbd});
+  for(let p=-125;p<=125;p+=50){
+    const road1=new THREE.Mesh(new THREE.PlaneGeometry(280,14),roadMat);
+    road1.rotation.x=-Math.PI/2; road1.position.set(0,0,p); scene.add(road1);
+    const road2=new THREE.Mesh(new THREE.PlaneGeometry(14,280),roadMat);
+    road2.rotation.x=-Math.PI/2; road2.position.set(p,0.01,0); scene.add(road2);
 
-renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.15;
-
-document.body.appendChild(renderer.domElement);
-
-/* =========================
-   LIGHTS
-========================= */
-
-scene.add(
-  new THREE.HemisphereLight(0xdcecff, 0x59604f, 2)
-);
-
-const sunlight = new THREE.DirectionalLight(0xffe7c6, 2.7);
-sunlight.position.set(-80, 110, 60);
-sunlight.castShadow = true;
-sunlight.shadow.mapSize.set(1024, 1024);
-sunlight.shadow.camera.left = -125;
-sunlight.shadow.camera.right = 125;
-sunlight.shadow.camera.top = 125;
-sunlight.shadow.camera.bottom = -125;
-sunlight.shadow.normalBias = 0.04;
-scene.add(sunlight);
-
-/* =========================
-   TEXTURE CREATION
-========================= */
-
-function createBuildingTexture(baseColor, windowColor) {
-  const canvas = document.createElement("canvas");
-  canvas.width = 256;
-  canvas.height = 512;
-
-  const ctx = canvas.getContext("2d");
-
-  ctx.fillStyle = baseColor;
-  ctx.fillRect(0, 0, 256, 512);
-
-  for (let y = 16; y < 500; y += 38) {
-    for (let x = 14; x < 250; x += 42) {
-      const gradient = ctx.createLinearGradient(
-        x, y, x + 30, y + 27
-      );
-
-      gradient.addColorStop(0, windowColor);
-      gradient.addColorStop(0.55, "#6e8993");
-      gradient.addColorStop(1, "#263d4a");
-
-      ctx.fillStyle = gradient;
-      ctx.fillRect(x, y, 29, 25);
-
-      ctx.fillStyle = "rgba(255,255,255,0.3)";
-      ctx.fillRect(x + 3, y + 2, 3, 19);
-
-      ctx.fillStyle = "rgba(20,25,30,0.45)";
-      ctx.fillRect(x, y + 24, 29, 3);
+    for(let x=-130;x<130;x+=12){
+      const dash=new THREE.Mesh(new THREE.PlaneGeometry(5,0.22),lineMat);
+      dash.rotation.x=-Math.PI/2; dash.position.set(x,0.03,p); scene.add(dash);
+    }
+    for(let z=-130;z<130;z+=12){
+      const dash=new THREE.Mesh(new THREE.PlaneGeometry(0.22,5),lineMat);
+      dash.rotation.x=-Math.PI/2; dash.position.set(p,0.03,z); scene.add(dash);
     }
   }
 
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-  return texture;
-}
-
-function createRoadTexture() {
-  const canvas = document.createElement("canvas");
-  canvas.width = 512;
-  canvas.height = 512;
-
-  const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "#30363b";
-  ctx.fillRect(0, 0, 512, 512);
-
-  for (let i = 0; i < 12000; i++) {
-    const shade = Math.floor(35 + Math.random() * 35);
-    ctx.fillStyle = `rgb(${shade},${shade},${shade})`;
-    ctx.fillRect(Math.random()*512, Math.random()*512, 2, 2);
+  // Shared building materials: created only four times to save phone memory.
+  function makeFacade(base,lit){
+    const c=document.createElement("canvas");
+    c.width=128;c.height=256;
+    const ctx=c.getContext("2d");
+    ctx.fillStyle=base;ctx.fillRect(0,0,128,256);
+    for(let y=9;y<250;y+=19){
+      for(let x=8;x<125;x+=17){
+        ctx.fillStyle=Math.random()<0.35?lit:"#172a3a";
+        ctx.fillRect(x,y,9,11);
+      }
+    }
+    const tex=new THREE.CanvasTexture(c);
+    tex.colorSpace=THREE.SRGBColorSpace;
+    return new THREE.MeshLambertMaterial({map:tex});
   }
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(1, 8);
-  return texture;
-}
-
-const roadTexture = createRoadTexture();
-
-const asphalt = new THREE.MeshStandardMaterial({
-  map: roadTexture,
-  roughness: 0.94
-});
-
-const concrete = new THREE.MeshStandardMaterial({
-  color: 0x999b98,
-  roughness: 0.95
-});
-
-const grass = new THREE.MeshStandardMaterial({
-  color: 0x526b48,
-  roughness: 1
-});
-
-const darkGlass = new THREE.MeshStandardMaterial({
-  color: 0x345363,
-  roughness: 0.22,
-  metalness: 0.35
-});
-
-/* =========================
-   CITY GROUND
-========================= */
-
-const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(340, 340),
-  grass
-);
-
-ground.rotation.x = -Math.PI / 2;
-ground.position.y = -0.15;
-ground.receiveShadow = true;
-scene.add(ground);
-
-/* =========================
-   ROAD SYSTEM
-========================= */
-
-function makeRoad(x, z, width, length, rotation = 0) {
-  const road = new THREE.Mesh(
-    new THREE.PlaneGeometry(width, length),
-    asphalt
-  );
-
-  road.rotation.x = -Math.PI / 2;
-  road.rotation.z = rotation;
-  road.position.set(x, 0.025, z);
-  road.receiveShadow = true;
-  scene.add(road);
-
-  // Road edge markings
-  for (const side of [-1, 1]) {
-    const edge = new THREE.Mesh(
-      new THREE.BoxGeometry(0.18, 0.025, length),
-      new THREE.MeshStandardMaterial({ color: 0xe2dfd2 })
-    );
-
-    edge.position.set(
-      x + side * (width / 2 - 0.6),
-      0.07,
-      z
-    );
-
-    edge.rotation.y = rotation;
-    scene.add(edge);
-  }
-
-  // Dashed center markings
-  for (let p = -length / 2 + 5; p < length / 2; p += 10) {
-    const dash = new THREE.Mesh(
-      new THREE.BoxGeometry(0.18, 0.025, 4),
-      new THREE.MeshStandardMaterial({ color: 0xe5dfc8 })
-    );
-
-    dash.position.set(x, 0.075, z + p);
-    dash.rotation.y = rotation;
-    scene.add(dash);
-  }
-}
-
-// Main avenues
-for (let p = -100; p <= 100; p += 40) {
-  makeRoad(p, 0, 13, 260);
-  makeRoad(0, p, 13, 260, Math.PI / 2);
-}
-
-// Smaller connecting streets
-for (let p = -80; p <= 80; p += 40) {
-  makeRoad(p + 20, 0, 8, 260);
-  makeRoad(0, p + 20, 8, 260, Math.PI / 2);
-}
-
-/* =========================
-   SIDEWALKS
-========================= */
-
-function makeSidewalk(x, z, width, length) {
-  const path = new THREE.Mesh(
-    new THREE.BoxGeometry(width, 0.22, length),
-    concrete
-  );
-
-  path.position.set(x, 0.09, z);
-  path.receiveShadow = true;
-  scene.add(path);
-}
-
-for (let p = -100; p <= 100; p += 40) {
-  for (const side of [-1, 1]) {
-    makeSidewalk(p + side * 8.2, 0, 2.8, 260);
-    makeSidewalk(0, p + side * 8.2, 260, 2.8);
-  }
-}
-
-/* =========================
-   BUILDING FACTORY
-========================= */
-
-const buildingStyles = [
-  ["#a9aaa6", "#a2c0cd"],
-  ["#858d91", "#a5c3d0"],
-  ["#b9b5aa", "#7c9dab"],
-  ["#777f85", "#90aab8"],
-  ["#c1b9a8", "#93b4c2"],
-  ["#969b99", "#b1cbd2"]
-];
-
-function makeBuilding(x, z, width, depth, height, styleIndex) {
-  const style = buildingStyles[styleIndex % buildingStyles.length];
-
-  const texture = createBuildingTexture(style[0], style[1]);
-
-  const wallMat = new THREE.MeshStandardMaterial({
-    map: texture,
-    roughness: 0.72,
-    metalness: 0.12
-  });
-
-  const building = new THREE.Group();
-
-  const body = new THREE.Mesh(
-    new THREE.BoxGeometry(width, height, depth),
-    wallMat
-  );
-
-  body.position.y = height / 2;
-  body.castShadow = true;
-  body.receiveShadow = true;
-  building.add(body);
-
-  // Roof
-  const roof = new THREE.Mesh(
-    new THREE.BoxGeometry(width + 0.6, 0.6, depth + 0.6),
-    new THREE.MeshStandardMaterial({
-      color: 0x4a5054,
-      roughness: 0.85
-    })
-  );
-
-  roof.position.y = height + 0.3;
-  roof.castShadow = true;
-  building.add(roof);
-
-  // Roof equipment
-  const equipment = new THREE.Mesh(
-    new THREE.BoxGeometry(width * 0.24, 1.4, depth * 0.25),
-    new THREE.MeshStandardMaterial({ color: 0x555c60 })
-  );
-
-  equipment.position.set(0, height + 1.25, 0);
-  building.add(equipment);
-
-  // Front entrance
-  const entrance = new THREE.Mesh(
-    new THREE.BoxGeometry(
-      Math.min(2.3, width * 0.25),
-      2.8,
-      0.12
-    ),
-    darkGlass
-  );
-
-  entrance.position.set(0, 1.4, depth / 2 + 0.07);
-  building.add(entrance);
-
-  // Ground floor trim
-  const trim = new THREE.Mesh(
-    new THREE.BoxGeometry(width + 0.25, 0.3, depth + 0.25),
-    new THREE.MeshStandardMaterial({ color: 0x666d70 })
-  );
-
-  trim.position.y = 0.18;
-  building.add(trim);
-
-  building.position.set(x, 0, z);
-  scene.add(building);
-}
-
-/* =========================
-   PLANNED CITY BLOCKS
-========================= */
-
-// Buildings are placed in organized city blocks.
-// Main roads stay clear between each block.
-
-const cityCenters = [];
-
-for (let x = -80; x <= 80; x += 40) {
-  for (let z = -80; z <= 80; z += 40) {
-    cityCenters.push([x, z]);
-  }
-}
-
-cityCenters.forEach(([cx, cz], index) => {
-  // Keep selected blocks as parks.
-  if (index === 5 || index === 10 || index === 15) {
-    return;
-  }
-
-  const positions = [
-    [-7, -7],
-    [7, -7],
-    [-7, 7],
-    [7, 7]
+  const facades=[
+    makeFacade("#596875","#f4d99a"),
+    makeFacade("#777b80","#ffe4a8"),
+    makeFacade("#394c60","#f2d18a"),
+    makeFacade("#777064","#f7e0a6")
   ];
 
-  positions.forEach(([ox, oz], i) => {
-    const tall = index % 3 === 0;
-
-    const width = 10 + ((index + i) % 3);
-    const depth = 10 + ((index + i + 1) % 3);
-
-    const height = tall
-      ? 25 + ((index * 7 + i * 11) % 35)
-      : 9 + ((index * 3 + i * 5) % 12);
-
-    makeBuilding(
-      cx + ox,
-      cz + oz,
-      width,
-      depth,
-      height,
-      index + i
-    );
-  });
-});
-
-/* =========================
-   PARKS AND TREES
-========================= */
-
-function makeTree(x, z, scale = 1) {
-  const group = new THREE.Group();
-
-  const trunk = new THREE.Mesh(
-    new THREE.CylinderGeometry(
-      0.18 * scale,
-      0.27 * scale,
-      3.8 * scale,
-      10
-    ),
-    new THREE.MeshStandardMaterial({
-      color: 0x57402c,
-      roughness: 1
-    })
-  );
-
-  trunk.position.y = 1.9 * scale;
-  trunk.castShadow = true;
-  group.add(trunk);
-
-  const leaves = new THREE.Mesh(
-    new THREE.SphereGeometry(1.9 * scale, 12, 10),
-    new THREE.MeshStandardMaterial({
-      color: 0x31543b,
-      roughness: 1
-    })
-  );
-
-  leaves.position.y = 4.1 * scale;
-  leaves.scale.set(1, 1.15, 1);
-  leaves.castShadow = true;
-  group.add(leaves);
-
-  group.position.set(x, 0, z);
-  scene.add(group);
-}
-
-function makePark(cx, cz) {
-  const park = new THREE.Mesh(
-    new THREE.BoxGeometry(25, 0.16, 25),
-    new THREE.MeshStandardMaterial({ color: 0x59734d })
-  );
-
-  park.position.set(cx, 0.02, cz);
-  park.receiveShadow = true;
-  scene.add(park);
-
-  for (let x = -9; x <= 9; x += 6) {
-    for (let z = -9; z <= 9; z += 6) {
-      if (Math.abs(x) < 3 && Math.abs(z) < 3) continue;
-      makeTree(cx + x, cz + z, 0.85);
-    }
-  }
-
-  const path = new THREE.Mesh(
-    new THREE.BoxGeometry(2.2, 0.12, 23),
-    concrete
-  );
-
-  path.position.set(cx, 0.15, cz);
-  scene.add(path);
-}
-
-// Three city parks
-makePark(0, -40);
-makePark(-40, 40);
-makePark(80, 80);
-
-// Street trees
-for (let p = -100; p <= 100; p += 20) {
-  makeTree(p, -11, 0.75);
-  makeTree(p, 11, 0.75);
-  makeTree(-11, p, 0.75);
-  makeTree(11, p, 0.75);
-}
-
-/* =========================
-   STREETLIGHTS
-========================= */
-
-function makeStreetlight(x, z, rotation = 0) {
-  const group = new THREE.Group();
-
-  const pole = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.09, 0.13, 6, 8),
-    new THREE.MeshStandardMaterial({
-      color: 0x4b5052,
-      metalness: 0.6,
-      roughness: 0.4
-    })
-  );
-
-  pole.position.y = 3;
-  group.add(pole);
-
-  const arm = new THREE.Mesh(
-    new THREE.BoxGeometry(1.7, 0.12, 0.12),
-    pole.material
-  );
-
-  arm.position.set(0.7, 5.8, 0);
-  group.add(arm);
-
-  const lamp = new THREE.Mesh(
-    new THREE.BoxGeometry(0.8, 0.22, 0.45),
-    new THREE.MeshStandardMaterial({
-      color: 0xffe3ad,
-      emissive: 0xffc66b,
-      emissiveIntensity: 0.7
-    })
-  );
-
-  lamp.position.set(1.35, 5.7, 0);
-  group.add(lamp);
-
-  group.position.set(x, 0, z);
-  group.rotation.y = rotation;
-  scene.add(group);
-}
-
-for (let p = -100; p <= 100; p += 40) {
-  makeStreetlight(p, -10);
-  makeStreetlight(p, 10);
-  makeStreetlight(-10, p, Math.PI / 2);
-  makeStreetlight(10, p, Math.PI / 2);
-}
-
-/* =========================
-   CARS
-========================= */
-
-function makeCar(x, z, color, rotation = 0) {
-  const car = new THREE.Group();
-
-  const paint = new THREE.MeshStandardMaterial({
-    color,
-    metalness: 0.55,
-    roughness: 0.32
-  });
-
-  const body = new THREE.Mesh(
-    new THREE.BoxGeometry(2.4, 0.85, 4.8),
-    paint
-  );
-
-  body.position.y = 0.85;
-  body.castShadow = true;
-  car.add(body);
-
-  const cabin = new THREE.Mesh(
-    new THREE.BoxGeometry(2.05, 1.0, 2.35),
-    darkGlass
-  );
-
-  cabin.position.set(0, 1.65, -0.25);
-  car.add(cabin);
-
-  const wheelMat = new THREE.MeshStandardMaterial({
-    color: 0x17191b,
-    roughness: 0.95
-  });
-
-  for (const side of [-1, 1]) {
-    for (const front of [-1, 1]) {
-      const wheel = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.43, 0.43, 0.27, 16),
-        wheelMat
+  // City buildings
+  const positions=[-100,-75,-25,25,75,100];
+  let buildingCount=0;
+  for(const x of positions){
+    for(const z of positions){
+      if(Math.abs(x)<35 && Math.abs(z)<35) continue;
+      if(Math.random()<0.22) continue;
+      const w=15+Math.random()*9;
+      const d=15+Math.random()*9;
+      const h=18+Math.random()*55;
+      const mat=facades[Math.floor(Math.random()*facades.length)];
+      const building=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);
+      building.position.set(x,h/2,z);
+      scene.add(building);
+      buildingCount++;
+      // Rooftop block
+      const roof=new THREE.Mesh(
+        new THREE.BoxGeometry(w*0.35,2,d*0.35),
+        new THREE.MeshLambertMaterial({color:0x343a40})
       );
-
-      wheel.rotation.z = Math.PI / 2;
-      wheel.position.set(side * 1.23, 0.48, front * 1.5);
-      car.add(wheel);
+      roof.position.set(x,h+1,z);
+      scene.add(roof);
     }
   }
 
-  car.position.set(x, 0, z);
-  car.rotation.y = rotation;
-  scene.add(car);
-}
+  // Small parks and trees
+  const trunkMat=new THREE.MeshLambertMaterial({color:0x65452c});
+  const leafMat=new THREE.MeshLambertMaterial({color:0x28643b});
+  for(let i=0;i<24;i++){
+    const x=(Math.random()-0.5)*230;
+    const z=(Math.random()-0.5)*230;
+    if(Math.abs(x%50)<12 || Math.abs(z%50)<12) continue;
+    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.7,4,6),trunkMat);
+    trunk.position.set(x,2,z);scene.add(trunk);
+    const leaves=new THREE.Mesh(new THREE.SphereGeometry(2.8,7,6),leafMat);
+    leaves.position.set(x,5,z);scene.add(leaves);
+  }
 
-makeCar(-16, -2, 0x273d52);
-makeCar(16, 2, 0x7c3430);
-makeCar(-56, -2, 0x777a69);
-makeCar(56, 2, 0x343a43);
-makeCar(-2, 56, 0x9b9b92, Math.PI / 2);
-makeCar(2, -56, 0x354e62, Math.PI / 2);
+  // A few parked cars
+  const carColors=[0xc83c32,0xd8d8d8,0x263c58,0xd6b84b];
+  for(let i=0;i<8;i++){
+    const car=new THREE.Group();
+    const color=carColors[i%carColors.length];
+    const body=new THREE.Mesh(
+      new THREE.BoxGeometry(5,1.5,2.5),
+      new THREE.MeshLambertMaterial({color})
+    );
+    body.position.y=1;car.add(body);
+    const cabin=new THREE.Mesh(
+      new THREE.BoxGeometry(2.5,1.1,2.1),
+      new THREE.MeshLambertMaterial({color:0x8ca8b8})
+    );
+    cabin.position.y=2;car.add(cabin);
+    car.position.set(-110+i*28,0,Math.random()<0.5?-7:7);
+    scene.add(car);
+  }
 
-/* =========================
-   PLAYER
-========================= */
-
-const player = new THREE.Group();
-scene.add(player);
-
-function makePlayerPart(geometry, color, x, y, z) {
-  const mesh = new THREE.Mesh(
-    geometry,
-    new THREE.MeshStandardMaterial({
-      color,
-      roughness: 0.85
-    })
+  // Player
+  const player=new THREE.Group();
+  const body=new THREE.Mesh(
+    new THREE.CapsuleGeometry(0.8,1.3,4,8),
+    new THREE.MeshLambertMaterial({color:0x263e75})
   );
-
-  mesh.position.set(x, y, z);
-  mesh.castShadow = true;
-  player.add(mesh);
-
-  return mesh;
-}
-
-const shirt = makePlayerPart(
-  new THREE.CapsuleGeometry(0.43, 0.85, 5, 10),
-  0x303e4c,
-  0, 1.6, 0
-);
-
-const head = makePlayerPart(
-  new THREE.SphereGeometry(0.29, 18, 14),
-  0xb98a6c,
-  0, 2.55, 0
-);
-
-makePlayerPart(
-  new THREE.SphereGeometry(0.31, 16, 12),
-  0x252b30,
-  0, 2.83, 0
-);
-
-const leftArm = makePlayerPart(
-  new THREE.CapsuleGeometry(0.13, 0.65, 4, 8),
-  0x303e4c,
-  -0.5, 1.7, 0
-);
-
-const rightArm = makePlayerPart(
-  new THREE.CapsuleGeometry(0.13, 0.65, 4, 8),
-  0x303e4c,
-  0.5, 1.7, 0
-);
-
-const leftLeg = makePlayerPart(
-  new THREE.CapsuleGeometry(0.17, 0.7, 4, 8),
-  0x252c32,
-  -0.21, 0.65, 0
-);
-
-const rightLeg = makePlayerPart(
-  new THREE.CapsuleGeometry(0.17, 0.7, 4, 8),
-  0x252c32,
-  0.21, 0.65, 0
-);
-
-makePlayerPart(
-  new THREE.BoxGeometry(0.3, 0.17, 0.48),
-  0x15191d,
-  -0.21, 0.12, -0.1
-);
-
-makePlayerPart(
-  new THREE.BoxGeometry(0.3, 0.17, 0.48),
-  0x15191d,
-  0.21, 0.12, -0.1
-);
-
-player.position.set(0, 0, 20);
-
-/* =========================
-   PLAYER CONTROLS
-========================= */
-
-const keys = {
-  forward: false,
-  backward: false,
-  left: false,
-  right: false
-};
-
-function bindButton(id, name) {
-  const button = document.getElementById(id);
-
-  button.addEventListener("pointerdown", event => {
-    event.preventDefault();
-    keys[name] = true;
-    button.classList.add("pressed");
-
-    try {
-      button.setPointerCapture(event.pointerId);
-    } catch (e) {}
-  });
-
-  function release() {
-    keys[name] = false;
-    button.classList.remove("pressed");
-  }
-
-  button.addEventListener("pointerup", release);
-  button.addEventListener("pointercancel", release);
-  button.addEventListener("lostpointercapture", release);
-}
-
-bindButton("forward", "forward");
-bindButton("backward", "backward");
-bindButton("left", "left");
-bindButton("right", "right");
-
-/* Keyboard support */
-
-addEventListener("keydown", event => {
-  if (event.key === "ArrowUp" || event.key === "w") keys.forward = true;
-  if (event.key === "ArrowDown" || event.key === "s") keys.backward = true;
-  if (event.key === "ArrowLeft" || event.key === "a") keys.left = true;
-  if (event.key === "ArrowRight" || event.key === "d") keys.right = true;
-});
-
-addEventListener("keyup", event => {
-  if (event.key === "ArrowUp" || event.key === "w") keys.forward = false;
-  if (event.key === "ArrowDown" || event.key === "s") keys.backward = false;
-  if (event.key === "ArrowLeft" || event.key === "a") keys.left = false;
-  if (event.key === "ArrowRight" || event.key === "d") keys.right = false;
-});
-
-/* =========================
-   THIRD PERSON CAMERA
-========================= */
-
-const target = new THREE.Vector3();
-const desiredCamera = new THREE.Vector3();
-
-function updateCamera(delta) {
-  const yaw = player.rotation.y;
-
-  desiredCamera.set(
-    player.position.x + Math.sin(yaw) * 8,
-    player.position.y + 5.3,
-    player.position.z + Math.cos(yaw) * 8
+  body.position.y=1.45;
+  player.add(body);
+  const head=new THREE.Mesh(
+    new THREE.SphereGeometry(0.48,10,8),
+    new THREE.MeshLambertMaterial({color:0xd5a27b})
   );
+  head.position.y=2.65;
+  player.add(head);
+  player.position.set(0,0,0);
+  scene.add(player);
 
-  const smooth = 1 - Math.pow(0.001, delta);
-  camera.position.lerp(desiredCamera, smooth);
+  let movingForward=false,movingBack=false,turningLeft=false,turningRight=false;
+  const speed=0.22,turnSpeed=0.045;
 
-  target.set(
-    player.position.x,
-    player.position.y + 1.7,
-    player.position.z
-  );
+  function bindButton(id,setter){
+    const el=document.getElementById(id);
+    el.addEventListener("pointerdown",e=>{e.preventDefault();setter(true);});
+    el.addEventListener("pointerup",()=>setter(false));
+    el.addEventListener("pointercancel",()=>setter(false));
+    el.addEventListener("pointerleave",()=>setter(false));
+  }
+  bindButton("forward",v=>movingForward=v);
+  bindButton("backward",v=>movingBack=v);
+  bindButton("turnLeft",v=>turningLeft=v);
+  bindButton("turnRight",v=>turningRight=v);
 
-  camera.lookAt(target);
+  document.getElementById("full").onclick=()=>{
+    if(document.documentElement.requestFullscreen)
+      document.documentElement.requestFullscreen();
+  };
+
+  function resize(){
+    camera.aspect=innerWidth/innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth,innerHeight);
+    renderer.setPixelRatio(Math.min(devicePixelRatio,1.25));
+  }
+  addEventListener("resize",resize);
+
+  camera.position.set(0,7,12);
+  camera.lookAt(player.position);
+
+  document.getElementById("loading").style.display="none";
+
+  function animate(){
+    requestAnimationFrame(animate);
+    if(turningLeft) player.rotation.y+=turnSpeed;
+    if(turningRight) player.rotation.y-=turnSpeed;
+
+    const direction=new THREE.Vector3(
+      Math.sin(player.rotation.y),0,Math.cos(player.rotation.y)
+    );
+    if(movingForward) player.position.addScaledVector(direction,-speed);
+    if(movingBack) player.position.addScaledVector(direction,speed);
+
+    player.position.x=THREE.MathUtils.clamp(player.position.x,-130,130);
+    player.position.z=THREE.MathUtils.clamp(player.position.z,-130,130);
+
+    const behind=new THREE.Vector3(
+      Math.sin(player.rotation.y)*10,
+      6,
+      Math.cos(player.rotation.y)*10
+    );
+    const target=player.position.clone().add(behind);
+    camera.position.lerp(target,0.12);
+    camera.lookAt(player.position.x,player.position.y+1.5,player.position.z);
+    renderer.render(scene,camera);
+  }
+  animate();
+
+} catch(error) {
+  console.error(error);
+  showError(error.message || "Please check your internet connection and try again.");
 }
-
-/* =========================
-   FULLSCREEN
-========================= */
-
-document.getElementById("fullscreen").addEventListener("click", async () => {
-  try {
-    if (!document.fullscreenElement) {
-      await document.documentElement.requestFullscreen();
-    }
-
-    if (screen.orientation && screen.orientation.lock) {
-      await screen.orientation.lock("landscape");
-    }
-  } catch (error) {
-    console.log("Landscape lock is not supported here.");
-  }
-});
-
-/* =========================
-   GAME LOOP
-========================= */
-
-const clock = new THREE.Clock();
-
-let walkTime = 0;
-
-function animate() {
-  requestAnimationFrame(animate);
-
-  const delta = Math.min(clock.getDelta(), 0.04);
-
-  const turnSpeed = 1.75;
-  const moveSpeed = 8;
-
-  if (keys.left) {
-    player.rotation.y += turnSpeed * delta;
-  }
-
-  if (keys.right) {
-    player.rotation.y -= turnSpeed * delta;
-  }
-
-  let moving = false;
-  let direction = 0;
-
-  if (keys.forward) {
-    moving = true;
-    direction = 1;
-  }
-
-  if (keys.backward) {
-    moving = true;
-    direction = -1;
-  }
-
-  if (moving) {
-    player.position.x -= Math.sin(player.rotation.y) *
-      direction * moveSpeed * delta;
-
-    player.position.z -= Math.cos(player.rotation.y) *
-      direction * moveSpeed * delta;
-
-    walkTime += delta * 9;
-
-    leftLeg.rotation.x = Math.sin(walkTime) * 0.42;
-    rightLeg.rotation.x = -Math.sin(walkTime) * 0.42;
-    leftArm.rotation.x =
+</script>
+</body>
+</html>
