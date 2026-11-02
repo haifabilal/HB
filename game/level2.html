@@ -1,0 +1,291 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HB Battle Royale - Level 2</title>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; overflow: hidden; font-family: Arial; background: #87ceeb; }
+#game { width: 100vw; height: 100vh; }
+#hud {
+  position: absolute; top: 12px; left: 12px;
+  color: white; background: #0009; padding: 10px;
+  border-radius: 10px; font-weight: bold;
+}
+#controls {
+  position: absolute; bottom: 22px; left: 0; right: 0;
+  display: flex; justify-content: space-between;
+  padding: 0 22px; pointer-events: none;
+}
+.pad { display: grid; grid-template-columns: 60px 60px; gap: 8px; }
+button {
+  width: 60px; height: 60px; border: 2px solid #fff9;
+  border-radius: 15px; background: #172b36bb;
+  color: white; font-size: 23px; font-weight: bold;
+  touch-action: none; pointer-events: auto;
+}
+button:active { background: #e5a329; }
+#note {
+ position:absolute; bottom:5px; width:100%;
+ text-align:center; color:white; font-size:11px;
+ text-shadow:1px 1px 3px black; pointer-events:none;
+}
+</style>
+</head>
+<body>
+<div id="game"></div>
+<div id="hud">HB BATTLE ROYALE<br>ISLAND: LEVEL 2</div>
+
+<div id="controls">
+  <div class="pad">
+    <button id="left">↶</button>
+    <button id="right">↷</button>
+    <button id="back">↓</button>
+    <button id="forward">↑</button>
+  </div>
+</div>
+<div id="note">Turn with ↶ ↷ • Move with ↑ ↓</div>
+
+<script type="module">
+import * as THREE from
+'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87ceeb);
+scene.fog = new THREE.Fog(0x87ceeb, 100, 330);
+
+const camera = new THREE.PerspectiveCamera(
+  70, innerWidth / innerHeight, 0.1, 700
+);
+
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.getElementById('game').appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x536b36, 2));
+
+const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+sun.position.set(-60, 100, 50);
+sun.castShadow = true;
+scene.add(sun);
+
+// Ocean
+const ocean = new THREE.Mesh(
+  new THREE.PlaneGeometry(700,700),
+  new THREE.MeshStandardMaterial({color:0x238bb5, roughness:0.8})
+);
+ocean.rotation.x = -Math.PI/2;
+ocean.position.y = -1;
+scene.add(ocean);
+
+// Large island
+const island = new THREE.Mesh(
+  new THREE.CylinderGeometry(145,155,9,64),
+  new THREE.MeshStandardMaterial({color:0x548c3c, roughness:1})
+);
+island.position.y = -4;
+island.receiveShadow = true;
+scene.add(island);
+
+const ground = new THREE.Mesh(
+  new THREE.CircleGeometry(145,64),
+  new THREE.MeshStandardMaterial({color:0x6b9c45})
+);
+ground.rotation.x = -Math.PI/2;
+ground.position.y = 0.6;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// Roads
+function road(x,z,w,h,rotation=0) {
+  const r = new THREE.Mesh(
+    new THREE.BoxGeometry(w,0.15,h),
+    new THREE.MeshStandardMaterial({color:0x555653})
+  );
+  r.position.set(x,0.72,z);
+  r.rotation.y = rotation;
+  scene.add(r);
+}
+road(0,0,15,210);
+road(-45,15,110,10);
+road(48,-40,100,9,-0.5);
+
+// Buildings
+function house(x,z,color=0xd5c5a1) {
+  const group = new THREE.Group();
+  const walls = new THREE.Mesh(
+    new THREE.BoxGeometry(13,8,11),
+    new THREE.MeshStandardMaterial({color})
+  );
+  walls.position.y=4;
+  walls.castShadow=true;
+  group.add(walls);
+
+  const roof = new THREE.Mesh(
+    new THREE.ConeGeometry(10,5,4),
+    new THREE.MeshStandardMaterial({color:0x873d2d})
+  );
+  roof.position.y=10.2;
+  roof.rotation.y=Math.PI/4;
+  roof.castShadow=true;
+  group.add(roof);
+  group.position.set(x,0.7,z);
+  scene.add(group);
+}
+
+house(-25,-25);
+house(-45,-30,0xc6d0d0);
+house(30,25,0xd9c49a);
+house(50,30,0xb9c5b9);
+house(-65,55,0xd4b58a);
+house(70,-65,0xc5c6aa);
+house(10,-85,0xd2c2a8);
+house(-90,-55,0xc7bfa8);
+
+// Trees
+function tree(x,z,size=1) {
+  const trunk = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.7*size,1*size,5*size,7),
+    new THREE.MeshStandardMaterial({color:0x684329})
+  );
+  trunk.position.set(x,3*size+0.7,z);
+  trunk.castShadow=true;
+  scene.add(trunk);
+
+  const leaves = new THREE.Mesh(
+    new THREE.ConeGeometry(4*size,10*size,8),
+    new THREE.MeshStandardMaterial({color:0x236b32})
+  );
+  leaves.position.set(x,9*size+0.7,z);
+  leaves.castShadow=true;
+  scene.add(leaves);
+}
+for(let i=0;i<100;i++){
+  const a=Math.random()*Math.PI*2;
+  const r=35+Math.random()*100;
+  const x=Math.cos(a)*r;
+  const z=Math.sin(a)*r;
+  if(Math.abs(x)<13 && Math.abs(z)<100) continue;
+  tree(x,z,0.7+Math.random()*0.6);
+}
+
+// Hills
+for(let i=0;i<9;i++){
+  const hill=new THREE.Mesh(
+    new THREE.SphereGeometry(1,16,12),
+    new THREE.MeshStandardMaterial({color:0x557c3a})
+  );
+  const a=i/9*Math.PI*2;
+  const r=105;
+  hill.position.set(Math.cos(a)*r,3,Math.sin(a)*r);
+  hill.scale.set(22,12,25);
+  hill.receiveShadow=true;
+  scene.add(hill);
+}
+
+// Player
+const player = new THREE.Group();
+const body = new THREE.Mesh(
+  new THREE.BoxGeometry(2.5,4,1.5),
+  new THREE.MeshStandardMaterial({color:0x253d36})
+);
+body.position.y=3;
+body.castShadow=true;
+player.add(body);
+
+const head = new THREE.Mesh(
+  new THREE.SphereGeometry(1.15,16,16),
+  new THREE.MeshStandardMaterial({color:0xc9946b})
+);
+head.position.y=5.7;
+player.add(head);
+
+const helmet = new THREE.Mesh(
+  new THREE.SphereGeometry(1.22,16,12,0,Math.PI*2,0,Math.PI/2),
+  new THREE.MeshStandardMaterial({color:0x344c37})
+);
+helmet.position.y=6.1;
+player.add(helmet);
+
+player.position.set(0,0.8,15);
+scene.add(player);
+
+// Controls
+const keys = {forward:false,back:false,left:false,right:false};
+
+function bindButton(id,key){
+  const b=document.getElementById(id);
+  b.addEventListener('pointerdown',e=>{
+    e.preventDefault(); keys[key]=true;
+  });
+  for(const event of ['pointerup','pointerleave','pointercancel']){
+    b.addEventListener(event,()=>keys[key]=false);
+  }
+}
+bindButton('forward','forward');
+bindButton('back','back');
+bindButton('left','left');
+bindButton('right','right');
+
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowUp'||e.key==='w') keys.forward=true;
+  if(e.key==='ArrowDown'||e.key==='s') keys.back=true;
+  if(e.key==='ArrowLeft'||e.key==='a') keys.left=true;
+  if(e.key==='ArrowRight'||e.key==='d') keys.right=true;
+});
+addEventListener('keyup',e=>{
+  if(e.key==='ArrowUp'||e.key==='w') keys.forward=false;
+  if(e.key==='ArrowDown'||e.key==='s') keys.back=false;
+  if(e.key==='ArrowLeft'||e.key==='a') keys.left=false;
+  if(e.key==='ArrowRight'||e.key==='d') keys.right=false;
+});
+
+// Camera and game loop
+const clock = new THREE.Clock();
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=Math.min(clock.getDelta(),0.04);
+
+  if(keys.left) player.rotation.y += 2.3*dt;
+  if(keys.right) player.rotation.y -= 2.3*dt;
+
+  let move=0;
+  if(keys.forward) move=1;
+  if(keys.back) move=-1;
+
+  player.position.x += Math.sin(player.rotation.y)*move*19*dt;
+  player.position.z += Math.cos(player.rotation.y)*move*19*dt;
+
+  // Keep player on island
+  const distance=Math.hypot(player.position.x,player.position.z);
+  if(distance>137){
+    player.position.x*=137/distance;
+    player.position.z*=137/distance;
+  }
+
+  const behind = new THREE.Vector3(
+    -Math.sin(player.rotation.y)*13,
+    8,
+    -Math.cos(player.rotation.y)*13
+  );
+  const target=player.position.clone().add(behind);
+  camera.position.lerp(target,0.12);
+  camera.lookAt(player.position.x,player.position.y+3,player.position.z);
+
+  renderer.render(scene,camera);
+}
+animate();
+
+addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+});
+</script>
+</body>
+</html>
