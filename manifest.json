@@ -1,0 +1,24 @@
+
+{
+  "name": "HB LAND 18",
+  "short_name": "HB LAND 18",
+  "description": "Play, Explore and Conquer!",
+  "start_url": "/HB/game/hb18.html",
+  "scope": "/HB/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#080d1b",
+  "theme_color": "#080d1b",
+  "icons": [
+    {
+      "src": "/HB/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/HB/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
