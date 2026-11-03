@@ -5,6 +5,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>HB LAND 18</title>
+ <link rel="manifest" href="/HB/manifest.json">
+<meta name="theme-color" content="#080d1b">
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#101827;color:white;font-family:Arial;overflow:hidden;touch-action:none}
@@ -746,3 +748,10 @@ start();
 </script>
 </body>
 </html>
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/HB/sw.js", {
+    scope: "/HB/"
+  });
+}
+</script>
