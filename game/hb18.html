@@ -6,87 +6,66 @@
 <title>HB 18</title>
 <style>
 *{box-sizing:border-box}
-body{
- margin:0;background:#101827;color:white;
- font-family:Arial;overflow:hidden;touch-action:none;
-}
-header{
- height:62px;display:flex;align-items:center;
- justify-content:space-around;background:#17243a;
-}
-h1{color:#50e6c0;letter-spacing:3px;font-size:25px}
-.info{text-align:center;font-size:12px;color:#bdcce0}
-.info b{display:block;font-size:18px;color:white;margin-top:4px}
-#game{
- display:block;width:100vw;height:calc(100dvh - 62px);
- touch-action:none;
-}
-#hint{
- position:fixed;bottom:12px;left:50%;
- transform:translateX(-50%);
- background:#17243add;padding:10px 16px;
- border-radius:20px;font-size:12px;
- pointer-events:none;white-space:nowrap;
-}
-#leader{
- position:fixed;top:72px;right:8px;
- background:#142238dd;padding:9px;
- border-radius:10px;font-size:11px;
- line-height:19px;pointer-events:none;
-}
-#restart{
- position:fixed;top:70px;left:8px;
- background:#50e6c0;color:#102033;
- border:0;border-radius:9px;
- padding:9px 12px;font-weight:bold;
-}
+body{margin:0;background:#101827;color:white;font-family:Arial;overflow:hidden;touch-action:none}
+header{height:60px;background:#17243a;display:flex;align-items:center;justify-content:space-around}
+h1{color:#50e6c0;letter-spacing:3px;font-size:24px}
+.info{text-align:center;font-size:11px;color:#bdcce0}
+.info b{display:block;font-size:17px;color:white;margin-top:3px}
+#game{display:block;width:100vw;height:calc(100dvh - 60px);touch-action:none}
+#leader{position:fixed;right:8px;top:70px;background:#142238dd;padding:9px;border-radius:10px;font-size:11px;line-height:19px;pointer-events:none}
+#restart{position:fixed;top:70px;left:8px;background:#50e6c0;color:#102033;border:0;border-radius:9px;padding:9px 12px;font-weight:bold}
+#hint{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:#17243add;padding:10px 16px;border-radius:20px;font-size:12px;pointer-events:none;white-space:nowrap}
 </style>
 </head>
 <body>
-
 <header>
  <h1>HB 18</h1>
  <div class="info">YOUR LAND<b id="score">0%</b></div>
- <div class="info">YOUR RANK<b id="rank">1</b></div>
+ <div class="info">RANK<b id="rank">1</b></div>
 </header>
-
 <canvas id="game"></canvas>
-
 <div id="leader"></div>
 <button id="restart">RESTART</button>
-<div id="hint">👆 Drag your finger to steer</div>
+<div id="hint">👆 Drag your finger to move</div>
 
 <script>
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
 
-const WORLD=80;
+// Large world. The camera only shows the area around you.
+const WORLD=240;
 const CELL=20;
 const TOTAL=WORLD*WORLD;
-const VIEW=30;
+const EMPTY=-1;
 
-const colors=[
- "#21c9a5","#ff5470","#ffca45",
- "#658cff","#c277ff"
-];
+const colors=["#21c9a5","#ff5470","#ffca45","#658cff","#c277ff"];
 const names=["YOU","RED","GOLD","BLUE","PURPLE"];
-const EMPTY=255;
 
-let land,players,gameOver=false;
+let land,players,timer,tick=0;
 let direction={x:1,y:0};
-let tick=0;
-let timer;
-let viewWidth=600,viewHeight=600;
+let finger=null;
+let gameOver=false;
+let viewW=innerWidth,viewH=innerHeight-60;
 
 function id(x,y){return y*WORLD+x}
-function inside(x,y){
- return x>=0&&y>=0&&x<WORLD&&y<WORLD;
+function inside(x,y){return x>=0&&y>=0&&x<WORLD&&y<WORLD}
+
+function resize(){
+ const dpr=Math.min(devicePixelRatio||1,1.5);
+ viewW=innerWidth;
+ viewH=innerHeight-60;
+ canvas.width=Math.floor(viewW*dpr);
+ canvas.height=Math.floor(viewH*dpr);
+ canvas.style.width=viewW+"px";
+ canvas.style.height=viewH+"px";
+ ctx.setTransform(dpr,0,0,dpr,0,0);
 }
+addEventListener("resize",resize);
+resize();
 
 function makePlayer(i,x,y,dx,dy){
  return {
   i,x,y,dx,dy,
-  startX:x,startY:y,
   trail:[],
   alive:true,
   color:colors[i],
@@ -95,48 +74,101 @@ function makePlayer(i,x,y,dx,dy){
  };
 }
 
-function resize(){
- const dpr=Math.min(devicePixelRatio||1,1.5);
- viewWidth=innerWidth;
- viewHeight=innerHeight-62;
- canvas.width=Math.floor(viewWidth*dpr);
- canvas.height=Math.floor(viewHeight*dpr);
- canvas.style.width=viewWidth+"px";
- canvas.style.height=viewHeight+"px";
- ctx.setTransform(dpr,0,0,dpr,0,0);
+function paintHome(p){
+ for(let y=-3;y<=3;y++){
+  for(let x=-3;x<=3;x++){
+   const xx=p.x+x,yy=p.y+y;
+   if(inside(xx,yy))land[id(xx,yy)]=p.i;
+  }
+ }
 }
-addEventListener("resize",resize);
-resize();
 
-function startGame(){
- land=new Uint8Array(TOTAL);
- land.fill(EMPTY);
+function safeSpawn(p){
+ // Search for a completely empty area far from every living player.
+ for(let attempt=0;attempt<3000;attempt++){
+  const x=10+Math.floor(Math.random()*(WORLD-20));
+  const y=10+Math.floor(Math.random()*(WORLD-20));
+  let safe=true;
 
- players=[
-  makePlayer(0,40,40,1,0),
-  makePlayer(1,27,27,1,0),
-  makePlayer(2,53,27,-1,0),
-  makePlayer(3,27,53,1,0),
-  makePlayer(4,53,53,-1,0)
- ];
-
- for(const p of players){
-  for(let y=-2;y<=2;y++){
-   for(let x=-2;x<=2;x++){
-    land[id(p.x+x,p.y+y)]=p.i;
+  for(const other of players){
+   if(other===p||!other.alive)continue;
+   if(Math.hypot(other.x-x,other.y-y)<35){
+    safe=false;break;
    }
+  }
+
+  if(!safe)continue;
+
+  for(let yy=-4;yy<=4&&safe;yy++){
+   for(let xx=-4;xx<=4;xx++){
+    if(land[id(x+xx,y+yy)]!==EMPTY){
+     safe=false;break;
+    }
+   }
+  }
+
+  if(safe){
+   p.x=x;p.y=y;
+   p.dx=1;p.dy=0;
+   p.trail=[];
+   p.alive=true;
+   paintHome(p);
+   return true;
   }
  }
 
- direction={x:1,y:0};
- gameOver=false;
- tick=0;
- document.getElementById("hint").textContent="👆 Drag your finger to steer";
- clearInterval(timer);
- timer=setInterval(gameLoop,115);
- draw();
+ // Fallback: find the emptiest distant area.
+ let best=null,bestDistance=-1;
+ for(let y=8;y<WORLD-8;y+=4){
+  for(let x=8;x<WORLD-8;x+=4){
+   let occupied=0;
+   for(let yy=-3;yy<=3;yy++){
+    for(let xx=-3;xx<=3;xx++){
+     if(land[id(x+xx,y+yy)]!==EMPTY)occupied++;
+    }
+   }
+   if(occupied===0){
+    let nearest=9999;
+    for(const other of players){
+     if(other!==p&&other.alive)
+      nearest=Math.min(nearest,Math.hypot(other.x-x,other.y-y));
+    }
+    if(nearest>bestDistance){bestDistance=nearest;best={x,y};}
+   }
+  }
+ }
+ if(best){
+  p.x=best.x;p.y=best.y;p.dx=1;p.dy=0;
+  p.trail=[];p.alive=true;paintHome(p);
+  return true;
+ }
+ return false;
 }
 
+function start(){
+ clearInterval(timer);
+ land=new Int16Array(TOTAL);
+ land.fill(EMPTY);
+
+ players=[
+  makePlayer(0,120,120,1,0),
+  makePlayer(1,75,75,1,0),
+  makePlayer(2,165,75,-1,0),
+  makePlayer(3,75,165,1,0),
+  makePlayer(4,165,165,-1,0)
+ ];
+
+ players.forEach(p=>paintHome(p));
+ direction={x:1,y:0};
+ tick=0;gameOver=false;finger=null;
+
+ document.getElementById("hint").textContent="👆 Drag your finger to move";
+ updateStats();
+ draw();
+ timer=setInterval(gameLoop,105);
+}
+
+// Finger steering
 function steer(x,y){
  if(gameOver)return;
  if(x===-direction.x&&y===-direction.y)return;
@@ -145,14 +177,10 @@ function steer(x,y){
  players[0].dy=y;
 }
 
-// Finger swipe controls
-let finger=null;
 canvas.addEventListener("pointerdown",e=>{
  e.preventDefault();
  finger={x:e.clientX,y:e.clientY};
- if(canvas.setPointerCapture){
-  try{canvas.setPointerCapture(e.pointerId)}catch(err){}
- }
+ try{canvas.setPointerCapture(e.pointerId)}catch(err){}
 },{passive:false});
 
 canvas.addEventListener("pointermove",e=>{
@@ -162,12 +190,9 @@ canvas.addEventListener("pointermove",e=>{
  const dx=e.clientX-finger.x;
  const dy=e.clientY-finger.y;
 
- if(Math.max(Math.abs(dx),Math.abs(dy))>13){
-  if(Math.abs(dx)>Math.abs(dy)){
-   steer(dx>0?1:-1,0);
-  }else{
-   steer(0,dy>0?1:-1);
-  }
+ if(Math.max(Math.abs(dx),Math.abs(dy))>12){
+  if(Math.abs(dx)>Math.abs(dy))steer(dx>0?1:-1,0);
+  else steer(0,dy>0?1:-1);
   finger={x:e.clientX,y:e.clientY};
  }
 },{passive:false});
@@ -175,19 +200,56 @@ canvas.addEventListener("pointermove",e=>{
 canvas.addEventListener("pointerup",()=>finger=null);
 canvas.addEventListener("pointercancel",()=>finger=null);
 
+// Give all territory of a defeated player to their killer.
+// If nobody killed them, their territory becomes empty.
+function eliminate(victim,killer=null){
+ if(!victim.alive)return;
+
+ victim.alive=false;
+ victim.trail=[];
+
+ for(let i=0;i<TOTAL;i++){
+  if(land[i]===victim.i){
+   land[i]=killer?killer.i:EMPTY;
+  }
+ }
+
+ if(victim.i===0){
+  document.getElementById("hint").textContent=
+   killer?"You were eliminated! Respawning...":"You lost your territory! Respawning...";
+ }else{
+  document.getElementById("hint").textContent=
+   killer?killer.name+" eliminated "+victim.name+"!":"An opponent was eliminated!";
+ }
+
+ updateStats();
+
+ setTimeout(()=>{
+  if(gameOver)return;
+  if(safeSpawn(victim)){
+   if(victim.i===0){
+    direction={x:1,y:0};
+    document.getElementById("hint").textContent="👆 Drag your finger to move";
+   }
+   updateStats();
+   draw();
+  }
+ },1100);
+}
+
 function botTurn(p){
  const choices=[
   {x:1,y:0},{x:-1,y:0},
   {x:0,y:1},{x:0,y:-1}
  ];
+
  let possible=choices.filter(d=>
   !(d.x===-p.dx&&d.y===-p.dy)&&
   inside(p.x+d.x,p.y+d.y)
  );
 
  if(!possible.length){
-  p.dx=-p.dx;p.dy=-p.dy;
-  return;
+  p.dx=-p.dx;p.dy=-p.dy;return;
  }
 
  if(tick>=p.turnAt){
@@ -197,7 +259,7 @@ function botTurn(p){
   const list=safe.length?safe:possible;
   const choice=list[Math.floor(Math.random()*list.length)];
   p.dx=choice.x;p.dy=choice.y;
-  p.turnAt=tick+5+Math.floor(Math.random()*12);
+  p.turnAt=tick+5+Math.floor(Math.random()*13);
  }
 }
 
@@ -207,31 +269,25 @@ function capture(p){
  const queue=new Int32Array(TOTAL);
  let head=0,tail=0;
 
- for(let i=0;i<TOTAL;i++){
-  blocked[i]=land[i]===p.i?1:0;
- }
+ for(let i=0;i<TOTAL;i++)blocked[i]=land[i]===p.i?1:0;
  for(const cell of p.trail)blocked[cell]=1;
 
  function add(i){
   if(!blocked[i]&&!outside[i]){
-   outside[i]=1;
-   queue[tail++]=i;
+   outside[i]=1;queue[tail++]=i;
   }
  }
 
  for(let x=0;x<WORLD;x++){
-  add(id(x,0));
-  add(id(x,WORLD-1));
+  add(id(x,0));add(id(x,WORLD-1));
  }
  for(let y=0;y<WORLD;y++){
-  add(id(0,y));
-  add(id(WORLD-1,y));
+  add(id(0,y));add(id(WORLD-1,y));
  }
 
  while(head<tail){
   const i=queue[head++];
-  const x=i%WORLD;
-  const y=Math.floor(i/WORLD);
+  const x=i%WORLD,y=Math.floor(i/WORLD);
   if(x>0)add(i-1);
   if(x<WORLD-1)add(i+1);
   if(y>0)add(i-WORLD);
@@ -244,37 +300,18 @@ function capture(p){
  p.trail=[];
 }
 
-function eliminate(p){
- p.trail=[];
- p.alive=false;
-
- if(p.i===0){
-  document.getElementById("hint").textContent="Trail hit! Respawning...";
- }
-
- setTimeout(()=>{
-  if(gameOver)return;
-  p.x=p.startX;
-  p.y=p.startY;
-  p.dx=1;p.dy=0;
-  p.alive=true;
-  if(p.i===0){
-   document.getElementById("hint").textContent="👆 Drag your finger to steer";
-   direction={x:1,y:0};
-  }
- },900);
-}
-
 function move(p){
  if(!p.alive)return;
  if(p.i!==0)botTurn(p);
 
- const nx=p.x+p.dx;
- const ny=p.y+p.dy;
-
+ const nx=p.x+p.dx,ny=p.y+p.dy;
  if(!inside(nx,ny)){
-  if(p.i===0)eliminate(p);
-  else{
+  // The world is large, but has a distant outer limit.
+  // Turn bots around and safely turn the player around.
+  if(p.i===0){
+   p.dx=-p.dx;p.dy=-p.dy;
+   direction={x:p.dx,y:p.dy};
+  }else{
    p.dx=-p.dx;p.dy=-p.dy;
   }
   return;
@@ -282,15 +319,17 @@ function move(p){
 
  const next=id(nx,ny);
 
+ // Own trail collision: eliminated, no killer.
  if(p.trail.includes(next)){
-  eliminate(p);
+  eliminate(p,null);
   return;
  }
 
- // Check enemy trails
+ // If someone steps on another player's trail,
+ // that trail owner is eliminated and the mover takes their land.
  for(const enemy of players){
   if(enemy!==p&&enemy.alive&&enemy.trail.includes(next)){
-   eliminate(enemy);
+   eliminate(enemy,p);
   }
  }
 
@@ -302,10 +341,10 @@ function move(p){
   p.trail.push(next);
  }
 
- // Check if another player has entered this trail
+ // Check whether another player stepped onto this player's trail.
  for(const enemy of players){
   if(enemy!==p&&enemy.alive&&enemy.trail.includes(id(p.x,p.y))){
-   eliminate(enemy);
+   eliminate(enemy,p);
   }
  }
 }
@@ -317,8 +356,8 @@ function updateStats(){
   return n;
  });
 
- const percent=Math.floor(counts[0]/TOTAL*100);
- document.getElementById("score").textContent=percent+"%";
+ document.getElementById("score").textContent=
+  (counts[0]/TOTAL*100).toFixed(1)+"%";
 
  const sorted=[...counts].sort((a,b)=>b-a);
  document.getElementById("rank").textContent=
@@ -328,66 +367,56 @@ function updateStats(){
   "<b>LEADERBOARD</b><br>"+
   players.map((p,i)=>({p,n:counts[i]}))
   .sort((a,b)=>b.n-a.n)
-  .map(v=>
-   "<span style='color:"+v.p.color+"'>● "+
-   v.p.name+" "+Math.floor(v.n/TOTAL*100)+"%</span>"
-  ).join("<br>");
+  .map(v=>"<span style='color:"+v.p.color+"'>● "+
+   v.p.name+" "+(v.n/TOTAL*100).toFixed(1)+"%</span>")
+  .join("<br>");
 }
 
 function draw(){
- const player=players[0];
- const cols=Math.ceil(viewWidth/CELL)+2;
- const rows=Math.ceil(viewHeight/CELL)+2;
+ const me=players[0];
+ const cols=Math.ceil(viewW/CELL)+2;
+ const rows=Math.ceil(viewH/CELL)+2;
 
- // Camera follows the player
- const startX=Math.max(0,Math.min(
-  WORLD-cols,player.x-Math.floor(cols/2)
- ));
- const startY=Math.max(0,Math.min(
-  WORLD-rows,player.y-Math.floor(rows/2)
- ));
+ // Camera follows you through the large world.
+ const startX=Math.max(0,Math.min(WORLD-cols,me.x-Math.floor(cols/2)));
+ const startY=Math.max(0,Math.min(WORLD-rows,me.y-Math.floor(rows/2)));
 
  ctx.fillStyle="#17243a";
- ctx.fillRect(0,0,viewWidth,viewHeight);
+ ctx.fillRect(0,0,viewW,viewH);
 
+ // Draw only the visible part of the world.
  for(let sy=0;sy<rows;sy++){
   for(let sx=0;sx<cols;sx++){
-   const x=startX+sx;
-   const y=startY+sy;
+   const x=startX+sx,y=startY+sy;
    if(!inside(x,y))continue;
-
    const owner=land[id(x,y)];
    ctx.fillStyle=owner===EMPTY?"#29374d":colors[owner];
-   ctx.globalAlpha=owner===EMPTY?1:0.85;
+   ctx.globalAlpha=owner===EMPTY?1:0.88;
    ctx.fillRect(sx*CELL,sy*CELL,CELL-1,CELL-1);
   }
  }
  ctx.globalAlpha=1;
 
- // Draw trails
  for(const p of players){
   for(const cell of p.trail){
-   const x=cell%WORLD;
-   const y=Math.floor(cell/WORLD);
-   const sx=(x-startX)*CELL;
-   const sy=(y-startY)*CELL;
-   if(sx<0||sy<0||sx>=viewWidth||sy>=viewHeight)continue;
+   const x=cell%WORLD,y=Math.floor(cell/WORLD);
+   const sx=(x-startX)*CELL,sy=(y-startY)*CELL;
+   if(sx<0||sy<0||sx>=viewW||sy>=viewH)continue;
    ctx.fillStyle=p.color;
    ctx.fillRect(sx+2,sy+2,CELL-4,CELL-4);
-   ctx.strokeStyle="#ffffff";
+   ctx.strokeStyle="white";
    ctx.lineWidth=1;
    ctx.strokeRect(sx+4,sy+4,CELL-8,CELL-8);
   }
  }
 
- // Draw players
  for(const p of players){
   if(!p.alive)continue;
   const sx=(p.x-startX)*CELL+CELL/2;
   const sy=(p.y-startY)*CELL+CELL/2;
-  if(sx<0||sy<0||sx>viewWidth||sy>viewHeight)continue;
+  if(sx<0||sy<0||sx>viewW||sy>viewH)continue;
 
-  ctx.fillStyle="#ffffff";
+  ctx.fillStyle="white";
   ctx.beginPath();
   ctx.arc(sx,sy,8,0,Math.PI*2);
   ctx.fill();
@@ -395,7 +424,7 @@ function draw(){
   ctx.lineWidth=4;
   ctx.stroke();
 
-  ctx.fillStyle="#ffffff";
+  ctx.fillStyle="white";
   ctx.font="bold 10px Arial";
   ctx.textAlign="center";
   ctx.fillText(p.name,sx,sy-13);
@@ -410,9 +439,8 @@ function gameLoop(){
  draw();
 }
 
-document.getElementById("restart").onclick=startGame;
-
-startGame();
+document.getElementById("restart").onclick=start;
+start();
 </script>
 </body>
 </html>
