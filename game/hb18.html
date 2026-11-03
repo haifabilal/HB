@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>HB 18</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#10182b;color:white;font-family:Arial;
+ text-align:center;overflow:hidden;touch-action:none;
+}
+h1{color:#53e6c1;margin:12px 0 4px;letter-spacing:3px}
+#info{display:flex;justify-content:space-around;max-width:520px;margin:10px auto}
+.panel{background:#202d48;padding:9px 15px;border-radius:12px}
+#board{
+ width:min(92vw,520px);height:auto;aspect-ratio:1;
+ background:#18243b;border:3px solid #53e6c1;
+ border-radius:8px;display:block;margin:10px auto;
+}
+#controls{
+ width:220px;margin:12px auto;
+ display:grid;grid-template-columns:repeat(3,65px);
+ grid-template-rows:repeat(2,58px);gap:7px;
+}
+button{
+ border:0;border-radius:12px;background:#263d60;
+ color:white;font-size:25px;font-weight:bold;
+ touch-action:none;
+}
+button:active{background:#53e6c1;color:#102033}
+#up{grid-column:2}
+#left{grid-column:1;grid-row:2}
+#down{grid-column:2;grid-row:2}
+#right{grid-column:3;grid-row:2}
+#restart{
+ font-size:16px;padding:12px 25px;
+ background:#53e6c1;color:#102033;margin:5px;
+}
+#message{min-height:22px;color:#ffd66b;font-size:14px}
+small{color:#aebbd1}
+</style>
+</head>
+<body>
+
+<h1>HB 18</h1>
+<div id="info">
+ <div class="panel">LAND: <span id="score">0%</span></div>
+ <div class="panel">BEST: <span id="best">0%</span></div>
+</div>
+
+<canvas id="board" width="600" height="600"></canvas>
+
+<div id="message">Capture land by returning to your territory!</div>
+
+<div id="controls">
+ <button id="up">↑</button>
+ <button id="left">←</button>
+ <button id="down">↓</button>
+ <button id="right">→</button>
+</div>
+
+<button id="restart">RESTART GAME</button>
+<br><small>Move outside your land, make a loop, and return safely!</small>
+
+<script>
+const canvas=document.getElementById("board");
+const ctx=canvas.getContext("2d");
+
+const SIZE=30;
+const CELL=20;
+const total=SIZE*SIZE;
+
+let land,trail,player,direction;
+let running=true;
+let timer;
+let best=0;
+
+const scoreText=document.getElementById("score");
+const bestText=document.getElementById("best");
+const message=document.getElementById("message");
+
+function key(x,y){return y*SIZE+x;}
+
+function startGame(){
+ land=new Uint8Array(total);
+ trail=[];
+ player={x:15,y:15};
+ direction={x:1,y:0};
+ running=true;
+
+ // Starting territory
+ for(let y=13;y<=17;y++){
+  for(let x=13;x<=17;x++){
+   land[key(x,y)]=1;
+  }
+ }
+
+ message.textContent="Capture land by returning to your territory!";
+ updateScore();
+ draw();
+
+ clearInterval(timer);
+ timer=setInterval(move,125);
+}
+
+function updateScore(){
+ let count=0;
+ for(let i=0;i<total;i++)if(land[i])count++;
+ const percent=Math.floor(count/total*100);
+ scoreText.textContent=percent+"%";
+ best=Math.max(best,percent);
+ bestText.textContent=best+"%";
+}
+
+function setDirection(x,y){
+ if(!running)return;
+ // Do not allow an immediate reverse
+ if(x===-direction.x && y===-direction.y)return;
+ direction={x,y};
+}
+
+document.getElementById("up").addEventListener("pointerdown",()=>setDirection(0,-1));
+document.getElementById("down").addEventListener("pointerdown",()=>setDirection(0,1));
+document.getElementById("left").addEventListener("pointerdown",()=>setDirection(-1,0));
+document.getElementById("right").addEventListener("pointerdown",()=>setDirection(1,0));
+
+document.addEventListener("keydown",e=>{
+ if(e.key==="ArrowUp"||e.key==="w")setDirection(0,-1);
+ if(e.key==="ArrowDown"||e.key==="s")setDirection(0,1);
+ if(e.key==="ArrowLeft"||e.key==="a")setDirection(-1,0);
+ if(e.key==="ArrowRight"||e.key==="d")setDirection(1,0);
+});
+
+function move(){
+ if(!running)return;
+
+ const nx=player.x+direction.x;
+ const ny=player.y+direction.y;
+
+ if(nx<0||ny<0||nx>=SIZE||ny>=SIZE){
+  endGame("You reached the edge! Try again.");
+  return;
+ }
+
+ const next=key(nx,ny);
+
+ // Hit your own unfinished trail
+ if(trail.includes(next)){
+  endGame("You crossed your trail! Try again.");
+  return;
+ }
+
+ player.x=nx;
+ player.y=ny;
+
+ if(land[next]){
+  if(trail.length>0)captureLand();
+ }else{
+  trail.push(next);
+ }
+
+ updateScore();
+ draw();
+}
+
+function captureLand(){
+ const blocked=new Uint8Array(total);
+ const outside=new Uint8Array(total);
+ const queue=new Int32Array(total);
+ let head=0,tail=0;
+
+ for(let i=0;i<total;i++)blocked[i]=land[i];
+
+ for(const cell of trail)blocked[cell]=1;
+
+ // Flood-fill empty cells connected to the outer edge
+ function add(i){
+  if(!blocked[i]&&!outside[i]){
+   outside[i]=1;
+   queue[tail++]=i;
+  }
+ }
+
+ for(let x=0;x<SIZE;x++){
+  add(key(x,0));
+  add(key(x,SIZE-1));
+ }
+ for(let y=0;y<SIZE;y++){
+  add(key(0,y));
+  add(key(SIZE-1,y));
+ }
+
+ while(head<tail){
+  const i=queue[head++];
+  const x=i%SIZE;
+  const y=Math.floor(i/SIZE);
+
+  if(x>0)add(i-1);
+  if(x<SIZE-1)add(i+1);
+  if(y>0)add(i-SIZE);
+  if(y<SIZE-1)add(i+SIZE);
+ }
+
+ // Capture enclosed spaces and the trail
+ for(let i=0;i<total;i++){
+  if(!outside[i])land[i]=1;
+ }
+
+ trail=[];
+ message.textContent="Nice capture! Keep expanding!";
+}
+
+function endGame(text){
+ running=false;
+ clearInterval(timer);
+ message.textContent=text+" Press RESTART to play again.";
+}
+
+function draw(){
+ ctx.clearRect(0,0,600,600);
+
+ // Background grid
+ for(let y=0;y<SIZE;y++){
+  for(let x=0;x<SIZE;x++){
+   const i=key(x,y);
+   ctx.fillStyle=land[i]?"#20b99b":"#24334d";
+   ctx.fillRect(x*CELL+1,y*CELL+1,CELL-2,CELL-2);
+  }
+ }
+
+ // Unfinished trail
+ for(const i of trail){
+  const x=i%SIZE;
+  const y=Math.floor(i/SIZE);
+  ctx.fillStyle="#ffe16a";
+  ctx.fillRect(x*CELL+2,y*CELL+2,CELL-4,CELL-4);
+ }
+
+ // Player
+ ctx.fillStyle="#ffffff";
+ ctx.beginPath();
+ ctx.arc(player.x*CELL+10,player.y*CELL+10,8,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.strokeStyle="#53e6c1";
+ ctx.lineWidth=2;
+ ctx.strokeRect(1,1,598,598);
+}
+
+document.getElementById("restart").onclick=startGame;
+startGame();
+</script>
+</body>
+</html>
