@@ -6,107 +6,181 @@
 <title>HB 18</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#101827;color:white;font-family:Arial;text-align:center;overflow:hidden;touch-action:none}
-h1{margin:8px;color:#50e6c0;letter-spacing:4px}
-#stats{display:flex;justify-content:space-around;max-width:560px;margin:8px auto}
-.stat{background:#24334b;padding:8px 14px;border-radius:12px;font-weight:bold}
-canvas{width:min(94vw,68vh);height:min(94vw,68vh);max-width:600px;max-height:600px;background:#202c43;border:3px solid #50e6c0;border-radius:10px;display:block;margin:auto}
-#message{height:22px;color:#ffe17a;font-size:13px;margin:5px}
-#controls{display:flex;justify-content:space-between;max-width:440px;margin:8px auto}
-.pad{display:grid;grid-template-columns:58px 58px 58px;grid-template-rows:48px 48px;gap:5px}
-button{border:0;border-radius:12px;background:#304867;color:white;font-size:23px;font-weight:bold;touch-action:none}
-button:active{background:#50e6c0;color:#102033}
-#up{grid-column:2}
-#left{grid-column:1;grid-row:2}
-#down{grid-column:2;grid-row:2}
-#right{grid-column:3;grid-row:2}
-#restart{font-size:15px;padding:11px 20px;background:#50e6c0;color:#102033}
-#leader{position:absolute;right:8px;top:90px;background:#18263dcc;padding:8px;border-radius:10px;text-align:left;font-size:12px;pointer-events:none}
-small{color:#aebbd1}
+body{
+ margin:0;background:#101827;color:white;
+ font-family:Arial;overflow:hidden;touch-action:none;
+}
+header{
+ height:62px;display:flex;align-items:center;
+ justify-content:space-around;background:#17243a;
+}
+h1{color:#50e6c0;letter-spacing:3px;font-size:25px}
+.info{text-align:center;font-size:12px;color:#bdcce0}
+.info b{display:block;font-size:18px;color:white;margin-top:4px}
+#game{
+ display:block;width:100vw;height:calc(100dvh - 62px);
+ touch-action:none;
+}
+#hint{
+ position:fixed;bottom:12px;left:50%;
+ transform:translateX(-50%);
+ background:#17243add;padding:10px 16px;
+ border-radius:20px;font-size:12px;
+ pointer-events:none;white-space:nowrap;
+}
+#leader{
+ position:fixed;top:72px;right:8px;
+ background:#142238dd;padding:9px;
+ border-radius:10px;font-size:11px;
+ line-height:19px;pointer-events:none;
+}
+#restart{
+ position:fixed;top:70px;left:8px;
+ background:#50e6c0;color:#102033;
+ border:0;border-radius:9px;
+ padding:9px 12px;font-weight:bold;
+}
 </style>
 </head>
 <body>
 
-<h1>HB 18</h1>
+<header>
+ <h1>HB 18</h1>
+ <div class="info">YOUR LAND<b id="score">0%</b></div>
+ <div class="info">YOUR RANK<b id="rank">1</b></div>
+</header>
 
-<div id="stats">
- <div class="stat">YOUR LAND: <span id="score">0%</span></div>
- <div class="stat">RANK: <span id="rank">1</span></div>
-</div>
+<canvas id="game"></canvas>
 
-<canvas id="game" width="600" height="600"></canvas>
-<div id="message">Capture land. Avoid enemy trails!</div>
 <div id="leader"></div>
-
-<div id="controls">
- <div class="pad">
-  <button id="up">↑</button>
-  <button id="left">←</button>
-  <button id="down">↓</button>
-  <button id="right">→</button>
- </div>
- <button id="restart">RESTART</button>
-</div>
-<small>Capture territory • Defeat opponents • Become No. 1</small>
+<button id="restart">RESTART</button>
+<div id="hint">👆 Drag your finger to steer</div>
 
 <script>
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
-const N=30,C=20,T=N*N;
 
-const colors=["#24d6ad","#ff5577","#ffcf48","#6e91ff","#bd70ff"];
-const names=["YOU","BOT RED","BOT GOLD","BOT BLUE","BOT PURPLE"];
+const WORLD=80;
+const CELL=20;
+const TOTAL=WORLD*WORLD;
+const VIEW=30;
 
-let owners,players,gameOver=false;
+const colors=[
+ "#21c9a5","#ff5470","#ffca45",
+ "#658cff","#c277ff"
+];
+const names=["YOU","RED","GOLD","BLUE","PURPLE"];
+const EMPTY=255;
+
+let land,players,gameOver=false;
 let direction={x:1,y:0};
-let score=0;
 let tick=0;
+let timer;
+let viewWidth=600,viewHeight=600;
 
-function id(x,y){return y*N+x}
-function inside(x,y){return x>=0&&y>=0&&x<N&&y<N}
+function id(x,y){return y*WORLD+x}
+function inside(x,y){
+ return x>=0&&y>=0&&x<WORLD&&y<WORLD;
+}
 
-function makePlayer(index,x,y,dir){
+function makePlayer(i,x,y,dx,dy){
  return {
-  index,x,y,dx:dir.x,dy:dir.y,
-  trail:[],alive:true,steps:0,
-  color:colors[index],name:names[index]
+  i,x,y,dx,dy,
+  startX:x,startY:y,
+  trail:[],
+  alive:true,
+  color:colors[i],
+  name:names[i],
+  turnAt:0
  };
 }
 
-function start(){
- owners=new Int8Array(T);
- owners.fill(-1);
+function resize(){
+ const dpr=Math.min(devicePixelRatio||1,1.5);
+ viewWidth=innerWidth;
+ viewHeight=innerHeight-62;
+ canvas.width=Math.floor(viewWidth*dpr);
+ canvas.height=Math.floor(viewHeight*dpr);
+ canvas.style.width=viewWidth+"px";
+ canvas.style.height=viewHeight+"px";
+ ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+addEventListener("resize",resize);
+resize();
+
+function startGame(){
+ land=new Uint8Array(TOTAL);
+ land.fill(EMPTY);
+
  players=[
-  makePlayer(0,15,15,{x:1,y:0}),
-  makePlayer(1,4,4,{x:1,y:0}),
-  makePlayer(2,25,4,{x:-1,y:0}),
-  makePlayer(3,4,25,{x:1,y:0}),
-  makePlayer(4,25,25,{x:-1,y:0})
+  makePlayer(0,40,40,1,0),
+  makePlayer(1,27,27,1,0),
+  makePlayer(2,53,27,-1,0),
+  makePlayer(3,27,53,1,0),
+  makePlayer(4,53,53,-1,0)
  ];
 
- players.forEach(p=>{
+ for(const p of players){
   for(let y=-2;y<=2;y++){
    for(let x=-2;x<=2;x++){
-    const xx=p.x+x,yy=p.y+y;
-    if(inside(xx,yy))owners[id(xx,yy)]=p.index;
+    land[id(p.x+x,p.y+y)]=p.i;
    }
   }
- });
+ }
 
  direction={x:1,y:0};
  gameOver=false;
  tick=0;
- document.getElementById("message").textContent="Capture land. Avoid enemy trails!";
+ document.getElementById("hint").textContent="👆 Drag your finger to steer";
+ clearInterval(timer);
+ timer=setInterval(gameLoop,115);
  draw();
- updateStats();
 }
 
-function chooseDirection(p){
- const options=[
-  {x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}
- ];
+function steer(x,y){
+ if(gameOver)return;
+ if(x===-direction.x&&y===-direction.y)return;
+ direction={x,y};
+ players[0].dx=x;
+ players[0].dy=y;
+}
 
- let possible=options.filter(d=>
+// Finger swipe controls
+let finger=null;
+canvas.addEventListener("pointerdown",e=>{
+ e.preventDefault();
+ finger={x:e.clientX,y:e.clientY};
+ if(canvas.setPointerCapture){
+  try{canvas.setPointerCapture(e.pointerId)}catch(err){}
+ }
+},{passive:false});
+
+canvas.addEventListener("pointermove",e=>{
+ if(!finger)return;
+ e.preventDefault();
+
+ const dx=e.clientX-finger.x;
+ const dy=e.clientY-finger.y;
+
+ if(Math.max(Math.abs(dx),Math.abs(dy))>13){
+  if(Math.abs(dx)>Math.abs(dy)){
+   steer(dx>0?1:-1,0);
+  }else{
+   steer(0,dy>0?1:-1);
+  }
+  finger={x:e.clientX,y:e.clientY};
+ }
+},{passive:false});
+
+canvas.addEventListener("pointerup",()=>finger=null);
+canvas.addEventListener("pointercancel",()=>finger=null);
+
+function botTurn(p){
+ const choices=[
+  {x:1,y:0},{x:-1,y:0},
+  {x:0,y:1},{x:0,y:-1}
+ ];
+ let possible=choices.filter(d=>
   !(d.x===-p.dx&&d.y===-p.dy)&&
   inside(p.x+d.x,p.y+d.y)
  );
@@ -116,21 +190,26 @@ function chooseDirection(p){
   return;
  }
 
- // Bots occasionally change direction
- if(Math.random()<0.24||!inside(p.x+p.dx,p.y+p.dy)){
-  const safe=possible.filter(d=>owners[id(p.x+d.x,p.y+d.y)]!==p.index);
-  const choice=(safe.length?safe:possible)[Math.floor(Math.random()*(safe.length?safe:possible).length)];
+ if(tick>=p.turnAt){
+  const safe=possible.filter(d=>
+   land[id(p.x+d.x,p.y+d.y)]!==p.i
+  );
+  const list=safe.length?safe:possible;
+  const choice=list[Math.floor(Math.random()*list.length)];
   p.dx=choice.x;p.dy=choice.y;
+  p.turnAt=tick+5+Math.floor(Math.random()*12);
  }
 }
 
 function capture(p){
- const blocked=new Uint8Array(T);
- const outside=new Uint8Array(T);
- const queue=new Int32Array(T);
+ const blocked=new Uint8Array(TOTAL);
+ const outside=new Uint8Array(TOTAL);
+ const queue=new Int32Array(TOTAL);
  let head=0,tail=0;
 
- for(let i=0;i<T;i++)blocked[i]=owners[i]===p.index?1:0;
+ for(let i=0;i<TOTAL;i++){
+  blocked[i]=land[i]===p.i?1:0;
+ }
  for(const cell of p.trail)blocked[cell]=1;
 
  function add(i){
@@ -140,20 +219,27 @@ function capture(p){
   }
  }
 
- for(let x=0;x<N;x++){add(id(x,0));add(id(x,N-1))}
- for(let y=0;y<N;y++){add(id(0,y));add(id(N-1,y))}
+ for(let x=0;x<WORLD;x++){
+  add(id(x,0));
+  add(id(x,WORLD-1));
+ }
+ for(let y=0;y<WORLD;y++){
+  add(id(0,y));
+  add(id(WORLD-1,y));
+ }
 
  while(head<tail){
   const i=queue[head++];
-  const x=i%N,y=Math.floor(i/N);
+  const x=i%WORLD;
+  const y=Math.floor(i/WORLD);
   if(x>0)add(i-1);
-  if(x<N-1)add(i+1);
-  if(y>0)add(i-N);
-  if(y<N-1)add(i+N);
+  if(x<WORLD-1)add(i+1);
+  if(y>0)add(i-WORLD);
+  if(y<WORLD-1)add(i+WORLD);
  }
 
- for(let i=0;i<T;i++){
-  if(!outside[i])owners[i]=p.index;
+ for(let i=0;i<TOTAL;i++){
+  if(!outside[i])land[i]=p.i;
  }
  p.trail=[];
 }
@@ -162,35 +248,33 @@ function eliminate(p){
  p.trail=[];
  p.alive=false;
 
- // Respawn after a short delay
+ if(p.i===0){
+  document.getElementById("hint").textContent="Trail hit! Respawning...";
+ }
+
  setTimeout(()=>{
   if(gameOver)return;
-  let x,y;
-  do{
-   x=2+Math.floor(Math.random()*(N-4));
-   y=2+Math.floor(Math.random()*(N-4));
-  }while(owners[id(x,y)]!==p.index);
-
-  p.x=x;p.y=y;
+  p.x=p.startX;
+  p.y=p.startY;
   p.dx=1;p.dy=0;
   p.alive=true;
- },1000);
-
- if(p.index===0){
-  document.getElementById("message").textContent="Your trail was hit! Respawning...";
- }
+  if(p.i===0){
+   document.getElementById("hint").textContent="👆 Drag your finger to steer";
+   direction={x:1,y:0};
+  }
+ },900);
 }
 
 function move(p){
  if(!p.alive)return;
+ if(p.i!==0)botTurn(p);
 
- if(p.index!==0)chooseDirection(p);
+ const nx=p.x+p.dx;
+ const ny=p.y+p.dy;
 
- const nx=p.x+p.dx,ny=p.y+p.dy;
  if(!inside(nx,ny)){
-  if(p.index===0){
-   eliminate(p);
-  }else{
+  if(p.i===0)eliminate(p);
+  else{
    p.dx=-p.dx;p.dy=-p.dy;
   }
   return;
@@ -198,30 +282,27 @@ function move(p){
 
  const next=id(nx,ny);
 
- // Own trail collision
  if(p.trail.includes(next)){
   eliminate(p);
   return;
  }
 
- // A player enters another player's trail
+ // Check enemy trails
  for(const enemy of players){
-  if(enemy===p||!enemy.alive)continue;
-  if(enemy.trail.includes(next)){
+  if(enemy!==p&&enemy.alive&&enemy.trail.includes(next)){
    eliminate(enemy);
   }
  }
 
  p.x=nx;p.y=ny;
- p.steps++;
 
- if(owners[next]===p.index){
+ if(land[next]===p.i){
   if(p.trail.length)capture(p);
  }else{
   p.trail.push(next);
  }
 
- // Check if another player hits this player's trail
+ // Check if another player has entered this trail
  for(const enemy of players){
   if(enemy!==p&&enemy.alive&&enemy.trail.includes(id(p.x,p.y))){
    eliminate(enemy);
@@ -230,109 +311,108 @@ function move(p){
 }
 
 function updateStats(){
- const counts=players.map((p,i)=>owners.filter(v=>v===i).length);
- const myPercent=Math.floor(counts[0]/T*100);
- document.getElementById("score").textContent=myPercent+"%";
+ const counts=players.map((p,i)=>{
+  let n=0;
+  for(let j=0;j<TOTAL;j++)if(land[j]===i)n++;
+  return n;
+ });
+
+ const percent=Math.floor(counts[0]/TOTAL*100);
+ document.getElementById("score").textContent=percent+"%";
 
  const sorted=[...counts].sort((a,b)=>b-a);
- document.getElementById("rank").textContent=sorted.indexOf(counts[0])+1;
+ document.getElementById("rank").textContent=
+  sorted.indexOf(counts[0])+1;
 
  document.getElementById("leader").innerHTML=
   "<b>LEADERBOARD</b><br>"+
-  players.map((p,i)=>({p,count:counts[i]}))
-  .sort((a,b)=>b.count-a.count)
-  .map(v=>"<span style='color:"+v.p.color+"'>● "+v.p.name+": "+Math.floor(v.count/T*100)+"%</span>")
-  .join("<br>");
+  players.map((p,i)=>({p,n:counts[i]}))
+  .sort((a,b)=>b.n-a.n)
+  .map(v=>
+   "<span style='color:"+v.p.color+"'>● "+
+   v.p.name+" "+Math.floor(v.n/TOTAL*100)+"%</span>"
+  ).join("<br>");
 }
 
 function draw(){
- ctx.clearRect(0,0,600,600);
+ const player=players[0];
+ const cols=Math.ceil(viewWidth/CELL)+2;
+ const rows=Math.ceil(viewHeight/CELL)+2;
 
- // Territory squares
- for(let y=0;y<N;y++){
-  for(let x=0;x<N;x++){
-   const owner=owners[id(x,y)];
-   ctx.fillStyle=owner<0?"#25334b":colors[owner];
-   ctx.globalAlpha=owner<0?1:0.82;
-   ctx.fillRect(x*C+1,y*C+1,C-2,C-2);
+ // Camera follows the player
+ const startX=Math.max(0,Math.min(
+  WORLD-cols,player.x-Math.floor(cols/2)
+ ));
+ const startY=Math.max(0,Math.min(
+  WORLD-rows,player.y-Math.floor(rows/2)
+ ));
+
+ ctx.fillStyle="#17243a";
+ ctx.fillRect(0,0,viewWidth,viewHeight);
+
+ for(let sy=0;sy<rows;sy++){
+  for(let sx=0;sx<cols;sx++){
+   const x=startX+sx;
+   const y=startY+sy;
+   if(!inside(x,y))continue;
+
+   const owner=land[id(x,y)];
+   ctx.fillStyle=owner===EMPTY?"#29374d":colors[owner];
+   ctx.globalAlpha=owner===EMPTY?1:0.85;
+   ctx.fillRect(sx*CELL,sy*CELL,CELL-1,CELL-1);
   }
  }
  ctx.globalAlpha=1;
 
- // Player trails
+ // Draw trails
  for(const p of players){
   for(const cell of p.trail){
-   const x=cell%N,y=Math.floor(cell/N);
+   const x=cell%WORLD;
+   const y=Math.floor(cell/WORLD);
+   const sx=(x-startX)*CELL;
+   const sy=(y-startY)*CELL;
+   if(sx<0||sy<0||sx>=viewWidth||sy>=viewHeight)continue;
    ctx.fillStyle=p.color;
-   ctx.fillRect(x*C+2,y*C+2,C-4,C-4);
+   ctx.fillRect(sx+2,sy+2,CELL-4,CELL-4);
    ctx.strokeStyle="#ffffff";
    ctx.lineWidth=1;
-   ctx.strokeRect(x*C+4,y*C+4,C-8,C-8);
+   ctx.strokeRect(sx+4,sy+4,CELL-8,CELL-8);
   }
  }
 
- // Player characters
+ // Draw players
  for(const p of players){
   if(!p.alive)continue;
-  const x=p.x*C+10,y=p.y*C+10;
+  const sx=(p.x-startX)*CELL+CELL/2;
+  const sy=(p.y-startY)*CELL+CELL/2;
+  if(sx<0||sy<0||sx>viewWidth||sy>viewHeight)continue;
+
   ctx.fillStyle="#ffffff";
   ctx.beginPath();
-  ctx.arc(x,y,8,0,Math.PI*2);
+  ctx.arc(sx,sy,8,0,Math.PI*2);
   ctx.fill();
   ctx.strokeStyle=p.color;
   ctx.lineWidth=4;
   ctx.stroke();
-  ctx.fillStyle="#142238";
+
+  ctx.fillStyle="#ffffff";
   ctx.font="bold 10px Arial";
   ctx.textAlign="center";
-  ctx.fillText(p.index===0?"YOU":"BOT",x,y-13);
+  ctx.fillText(p.name,sx,sy-13);
  }
- ctx.strokeStyle="#ffffff";
- ctx.lineWidth=3;
- ctx.strokeRect(1,1,598,598);
 }
 
 function gameLoop(){
  if(gameOver)return;
  tick++;
-
- // Move all players
  for(const p of players)move(p);
-
  updateStats();
  draw();
 }
 
-function setDirection(x,y){
- if(gameOver)return;
- if(x===-direction.x&&y===-direction.y)return;
- direction={x,y};
- players[0].dx=x;
- players[0].dy=y;
-}
+document.getElementById("restart").onclick=startGame;
 
-function bind(id,x,y){
- const b=document.getElementById(id);
- b.addEventListener("pointerdown",e=>{
-  e.preventDefault();
-  setDirection(x,y);
- });
-}
-
-bind("up",0,-1);
-bind("down",0,1);
-bind("left",-1,0);
-bind("right",1,0);
-
-document.getElementById("restart").onclick=()=>{
- clearInterval(timer);
- start();
- timer=setInterval(gameLoop,145);
-};
-
-let timer;
-start();
-timer=setInterval(gameLoop,145);
+startGame();
 </script>
 </body>
 </html>
