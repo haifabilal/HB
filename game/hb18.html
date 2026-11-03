@@ -216,6 +216,24 @@ function safeSpawn(p){
 
   if(safe){
    p.x=x;p.y=y;p.dx=1;p.dy=0;
+   // HB LAND 18 MISSION & COINS
+if(p.i===0){
+ let data=JSON.parse(localStorage.getItem("hb18_rewards")||'{"coins":0,"captures":0,"completed":false}');
+
+ if(!data.completed){
+  data.captures++;
+
+  if(data.captures>=3){
+   data.coins+=100;
+   data.completed=true;
+   alert("🏆 MISSION COMPLETED!\n🪙 You earned 100 coins!");
+  }else{
+   alert("🎯 Mission Progress: "+data.captures+"/3 captures");
+  }
+ }
+
+ localStorage.setItem("hb18_rewards",JSON.stringify(data));
+}
    p.trail=[];p.alive=true;paintHome(p);
    return true;
   }
