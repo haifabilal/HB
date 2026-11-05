@@ -8,18 +8,16 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#071c38;color:white;font-family:Arial;overflow:hidden;touch-action:none}
-#game{display:block;width:100vw;height:100dvh}
-#hud{position:fixed;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;gap:6px;pointer-events:none}
+canvas#game{width:100vw;height:100dvh;display:block}
+#hud{position:fixed;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;gap:5px;pointer-events:none}
 .panel{background:#07172ddd;border:1px solid #ffffff44;border-radius:12px;padding:9px;font-size:13px}
 #mini{position:fixed;right:10px;top:65px;width:110px;height:110px;border:2px solid white;border-radius:10px;background:#07172d}
 #help{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:#07172ddd;padding:9px 14px;border-radius:20px;font-size:12px;white-space:nowrap}
-#lobby{position:fixed;inset:0;background:radial-gradient(circle,#164b70,#06152d 75%);display:flex;align-items:center;justify-content:center;text-align:center;padding:20px}
-#lobbyBox{width:min(420px,100%);background:#0c2341;border:1px solid #5be7d2;border-radius:25px;padding:25px;box-shadow:0 0 35px #00cdbb44}
-.logo{font-size:65px}
-h1{font-size:35px;margin:8px;color:#5be7d2}
+#lobby,#message{position:fixed;inset:0;background:radial-gradient(circle,#164b70,#06152d 75%);display:flex;align-items:center;justify-content:center;text-align:center;padding:20px}
+#lobbyBox,#messageBox{width:min(420px,100%);background:#0c2341;border:1px solid #5be7d2;border-radius:25px;padding:25px;box-shadow:0 0 35px #00cdbb44}
+.logo{font-size:65px}h1{font-size:35px;margin:8px;color:#5be7d2}
 button{border:0;border-radius:14px;padding:14px 25px;background:#50e6c0;color:#062339;font-size:18px;font-weight:bold;margin:8px}
-#message{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#00152dcc;text-align:center}
-#messageBox{background:#102c4b;padding:25px;border-radius:20px;border:1px solid #50e6c0}
+#message{display:none;background:#00152dcc}
 </style>
 </head>
 <body>
@@ -31,7 +29,7 @@ button{border:0;border-radius:14px;padding:14px 25px;background:#50e6c0;color:#0
  <div class="panel">LEVEL <span id="level">1</span></div>
 </div>
 <canvas id="mini" width="110" height="110" style="display:none"></canvas>
-<div id="help" style="display:none">👆 Drag in the direction you want to drive</div>
+<div id="help" style="display:none">👆 Drag to steer your car</div>
 
 <div id="lobby">
  <div id="lobbyBox">
@@ -60,12 +58,9 @@ const mini=document.getElementById("mini");
 const mc=mini.getContext("2d");
 
 let W,H,dpr,players=[],running=false,coins=0,kills=0;
-let camera={x:0,y:0};
-let last=0,world=2400,cell=20;
-let land=new Map();
-let targetAngle=0;
-let pointer=null;
-let level=1;
+let camera={x:0,y:0},last=0;
+const world=2400,cell=20;
+let land=new Map(),pointer=null,level=1;
 
 const colors=["#39f5c7","#ff5368","#ffd34f","#55a9ff","#bd75ff","#ff984e","#f77fc5","#a8e85b"];
 const names=["YOU","Alex","Ryan","Sam","Noah","Leo","Aiden","Max"];
@@ -98,19 +93,18 @@ function randomPosition(){
 }
 function makePlayer(id,x,y){
  return {id,name:names[id],x,y,angle:Math.random()*6.28,
- speed:id===0?180:125,trail:[],alive:true,turn:0,ai:0,home:[]};
+ speed:id===0?180:125,trail:[],alive:true,ai:0};
 }
 function startGame(){
  land.clear();players=[];coins=0;kills=0;level=1;
- const start={x:world/2,y:world/2};
- players.push(makePlayer(0,start.x,start.y));
+ players.push(makePlayer(0,world/2,world/2));
  for(let i=1;i<8;i++){
   let p=randomPosition();players.push(makePlayer(i,p.x,p.y));
  }
  for(let p of players){
   for(let x=-3;x<=3;x++)for(let y=-3;y<=3;y++){
    let px=p.x+x*cell,py=p.y+y*cell;
-   paint(px,py,p.id);p.home.push([px,py]);
+   paint(px,py,p.id);
   }
  }
  document.getElementById("lobby").style.display="none";
@@ -118,7 +112,8 @@ function startGame(){
  document.getElementById("hud").style.display="flex";
  document.getElementById("mini").style.display="block";
  document.getElementById("help").style.display="block";
- running=true;last=performance.now();requestAnimationFrame(loop);
+ running=true;last=performance.now();
+ requestAnimationFrame(loop);
 }
 function goLobby(){
  running=false;
@@ -132,21 +127,51 @@ function finish(win,reason){
  document.getElementById("resultText").textContent=reason;
  document.getElementById("message").style.display="flex";
 }
+function toast(s){document.getElementById("help").textContent=s}
+
+/* Transfer every captured cell from eliminated player to the winner. */
 function eliminate(victim,killer){
  if(!victim.alive)return;
  victim.alive=false;
  victim.trail=[];
- if(killer&&killer.id===0){
+ for(let [k,v] of land){
+  if(v===victim.id)land.set(k,killer.id);
+ }
+ if(killer.id===0){
   kills++;coins+=20;
-  for(let [k,v] of land)if(v===victim.id)land.set(k,0);
-  toast("Rival eliminated! +20 coins");
- }else if(victim.id===0){
-  finish(false,"A rival touched your trail or car!");
+  toast("Rival eliminated! +20 coins and all their land!");
+ }
+ if(victim.id===0){
+  finish(false,"Your trail was touched! You lost your land.");
+ }
+ const alive=players.filter(p=>p.alive);
+ if(alive.length===1&&alive[0].id===0){
+  coins+=500;
+  finish(true,"You defeated every rival! +500 coins!");
  }
 }
-function toast(s){
- document.getElementById("help").textContent=s;
+
+/* A player who touches another player's trail eliminates its owner. */
+function combat(){
+ const alive=players.filter(p=>p.alive);
+ for(let toucher of alive){
+  for(let owner of alive){
+   if(toucher===owner||!owner.trail.length)continue;
+   if(touchesTrail(toucher,owner.trail)){
+    eliminate(owner,toucher);
+    if(!running)return;
+    break;
+   }
+  }
+ }
 }
+function touchesTrail(player,trail){
+ for(let pt of trail){
+  if(Math.hypot(player.x-pt.x,player.y-pt.y)<19)return true;
+ }
+ return false;
+}
+
 function steerHuman(){
  if(pointer===null)return;
  let p=players[0];
@@ -167,6 +192,7 @@ function update(dt){
     p.angle+=(Math.random()-.5)*1.5;
    }
   }
+
   let oldX=p.x,oldY=p.y;
   p.x+=Math.cos(p.angle)*p.speed*dt;
   p.y+=Math.sin(p.angle)*p.speed*dt;
@@ -176,10 +202,10 @@ function update(dt){
    p.x=oldX;p.y=oldY;
   }
 
-  if(Math.abs(p.x-oldX)+Math.abs(p.y-oldY)>0){
+  if(Math.hypot(p.x-oldX,p.y-oldY)>0){
    if(!owned(p.x,p.y,p.id)){
     let lastPoint=p.trail[p.trail.length-1];
-    if(!lastPoint||Math.hypot(p.x-lastPoint.x,p.y-lastPoint.y)>5){
+    if(!lastPoint||Math.hypot(p.x-lastPoint.x,p.y-lastPoint.y)>4){
      p.trail.push({x:p.x,y:p.y});
     }
    }else if(p.trail.length){
@@ -188,17 +214,16 @@ function update(dt){
   }
  }
  combat();
- camera.x=me.x-W/2;
- camera.y=me.y-H/2;
- camera.x=Math.max(0,Math.min(world-W,camera.x));
- camera.y=Math.max(0,Math.min(world-H,camera.y));
+ if(!running)return;
+
+ camera.x=Math.max(0,Math.min(world-W,me.x-W/2));
+ camera.y=Math.max(0,Math.min(world-H,me.y-H/2));
 }
 function capture(p){
  let gained=0;
  for(let pt of p.trail){
-  let x=pt.x,y=pt.y;
   for(let ox=-2;ox<=2;ox++)for(let oy=-2;oy<=2;oy++){
-   let xx=x+ox*cell,yy=y+oy*cell;
+   let xx=pt.x+ox*cell,yy=pt.y+oy*cell;
    if(inside(xx,yy)&&!owned(xx,yy,p.id)){
     paint(xx,yy,p.id);gained++;
    }
@@ -206,48 +231,15 @@ function capture(p){
  }
  if(p.id===0){
   coins+=gained*5;
-  toast("Territory captured! +"+(gained*5)+" coins");
+  toast("Land captured! +"+gained*5+" coins");
  }
  p.trail=[];
-}
-function combat(){
- const me=players[0];
- if(!me||!me.alive)return;
-
- // Both directions: the player touching a rival's trail dies.
- for(let r of players.slice(1)){
-  if(!r.alive)continue;
-  if(touchesTrail(me,r.trail)){
-   eliminate(me,r);return;
-  }
- }
- // If your car touches a rival's trail, that rival dies.
- for(let r of players.slice(1)){
-  if(!r.alive)continue;
-  if(touchesTrail(r,me.trail))eliminate(r,me);
- }
- // A player's trail touching another player's car eliminates the car.
- for(let r of players.slice(1)){
-  if(!r.alive)continue;
-  if(touchesTrail(r,me.trail))eliminate(r,me);
-  for(let other of players.slice(1)){
-   if(other!==r&&other.alive&&touchesTrail(other,r.trail)){
-    eliminate(r,other);
-   }
-  }
- }
-}
-function touchesTrail(player,trail){
- for(let pt of trail){
-  if(Math.hypot(player.x-pt.x,player.y-pt.y)<17)return true;
- }
- return false;
 }
 function draw(){
  ctx.fillStyle="#0876b9";ctx.fillRect(0,0,W,H);
  ctx.save();ctx.translate(-camera.x,-camera.y);
 
- // Island
+ // Island outline
  ctx.beginPath();
  for(let a=0;a<=Math.PI*2+.01;a+=.02){
   let wobble=1+.025*Math.sin(a*7)+.018*Math.cos(a*11);
@@ -258,16 +250,16 @@ function draw(){
  ctx.closePath();ctx.fillStyle="#d2c47a";ctx.fill();
  ctx.strokeStyle="#fff0a8";ctx.lineWidth=22;ctx.stroke();
 
- // Territory
+ // Land
  for(let [k,id] of land){
   let [gx,gy]=k.split(",").map(Number);
   ctx.fillStyle=colors[id];
-  ctx.globalAlpha=.82;
+  ctx.globalAlpha=.86;
   ctx.fillRect(gx*cell,gy*cell,cell+1,cell+1);
  }
  ctx.globalAlpha=1;
 
- // Trails: bright outline and coloured core
+ // Thick visible trails
  for(let p of players){
   if(!p.alive||!p.trail.length)continue;
   ctx.beginPath();
@@ -275,33 +267,59 @@ function draw(){
   for(let pt of p.trail)ctx.lineTo(pt.x,pt.y);
   ctx.lineTo(p.x,p.y);
   ctx.lineCap="round";ctx.lineJoin="round";
-  ctx.strokeStyle="white";ctx.lineWidth=22;ctx.stroke();
-  ctx.strokeStyle=colors[p.id];ctx.lineWidth=13;ctx.stroke();
+  ctx.strokeStyle="#ffffff";ctx.lineWidth=23;ctx.stroke();
+  ctx.strokeStyle=colors[p.id];ctx.lineWidth=14;ctx.stroke();
  }
 
- // Cars
+ // Cars and names
  for(let p of players){
   if(!p.alive)continue;
   ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle);
   ctx.font="38px Arial";ctx.textAlign="center";ctx.textBaseline="middle";
   ctx.shadowColor="#000";ctx.shadowBlur=8;
-  ctx.fillText(cars[p.id],0,0);
-  ctx.restore();
+  ctx.fillText(cars[p.id],0,0);ctx.restore();
   ctx.fillStyle="white";ctx.font="bold 13px Arial";
   ctx.textAlign="center";ctx.fillText(p.name,p.x,p.y-29);
  }
  ctx.restore();
  drawMini();
+
+ let myCells=0;
+ for(let v of land.values())if(v===0)myCells++;
  document.getElementById("coins").textContent=coins;
  document.getElementById("kills").textContent=kills;
- document.getElementById("land").textContent=Math.min(100,Math.floor([...land.values()].filter(v=>v===0).length/400));
+ document.getElementById("land").textContent=Math.floor(myCells/400);
  document.getElementById("level").textContent=level;
 }
 function drawMini(){
  mc.fillStyle="#0876b9";mc.fillRect(0,0,110,110);
- mc.fillStyle="#c9bb73";mc.beginPath();mc.ellipse(55,55,49,44,0,0,Math.PI*2);mc.fill();
+ mc.fillStyle="#c9bb73";mc.beginPath();
+ mc.ellipse(55,55,49,44,0,0,Math.PI*2);mc.fill();
  for(let p of players){
   if(!p.alive)continue;
+  mc.fillStyle=colors[p.id];
+  mc.beginPath();mc.arc(p.x/world*110,p.y/world*110,3,0,Math.PI*2);mc.fill();
+ }
+}
+function loop(t){
+ if(!running)return;
+ let dt=Math.min((t-last)/1000,.04);last=t;
+ update(dt);draw();
+ if(running)requestAnimationFrame(loop);
+}
+canvas.addEventListener("pointerdown",e=>{
+ pointer={x:e.clientX,y:e.clientY};
+ canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener("pointermove",e=>{
+ if(pointer)pointer={x:e.clientX,y:e.clientY};
+});
+canvas.addEventListener("pointerup",()=>pointer=null);
+canvas.addEventListener("pointercancel",()=>pointer=null);
+</script>
+</body>
+</html>
+inue;
   mc.fillStyle=colors[p.id];
   mc.beginPath();mc.arc(p.x/world*110,p.y/world*110,3,0,Math.PI*2);mc.fill();
  }
