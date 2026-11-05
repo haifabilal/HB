@@ -1,231 +1,330 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#087de5">
 <title>HB LAND 18</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#087de5;color:white;overflow:hidden;touch-action:none}
-button{border:3px solid #063c9d;border-radius:17px;background:linear-gradient(#fff,#bceeff);color:#07358d;font-weight:900;font-size:15px;padding:12px;box-shadow:0 4px 0 #07358d}
-button:active{transform:scale(.96)}
-#screen{position:absolute;inset:0;background:linear-gradient(145deg,#22d5f1,#0871db 65%,#1741c9);overflow:auto}
-#top{display:flex;justify-content:space-around;align-items:center;padding:12px 5px}
-.counter{background:#102e9d;border:2px solid #6be9ff;border-radius:25px;padding:9px 14px;font-weight:bold}
-#content{padding:12px;text-align:center}
-.logo{font-size:42px;font-weight:1000;color:#ffe64d;text-shadow:3px 4px #06358d}
-.subtitle{font-weight:900;letter-spacing:3px}
-.panel{background:linear-gradient(#21d8f6,#c9f7ff);border:5px solid white;border-radius:25px;padding:17px;color:#07358d;box-shadow:0 5px 0 #07358d;margin:12px auto;max-width:500px}
-.big{font-size:24px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.tile{background:linear-gradient(#ffed55,#ffad20);border:3px solid white;border-radius:17px;padding:15px;color:#06358d;font-weight:900}
-.tile span{display:block;font-size:35px;margin:8px}
-#game{position:absolute;inset:0;background:#eafff6;display:none}
-#arena{width:100%;height:100%;display:block;touch-action:none}
-#gamehud{position:absolute;top:8px;left:8px;right:8px;pointer-events:none}
-#progress{height:27px;border:4px solid white;border-radius:30px;background:#102caa;overflow:hidden;box-shadow:0 2px 0 #06358d}
-#fill{height:100%;width:0;background:linear-gradient(90deg,#ff77d8,#ffe34e)}
-#percent{text-align:center;font-size:13px;font-weight:bold;margin-top:4px;text-shadow:1px 2px #07358d}
-#board{position:absolute;right:5px;top:65px;background:#102caa;border:2px solid white;border-radius:14px;padding:8px;font-size:12px;line-height:21px}
-#gamebuttons{position:absolute;bottom:10px;left:10px;right:10px;display:flex;justify-content:space-between}
-#gamebuttons button{font-size:12px;padding:9px}
-#overlay{position:absolute;inset:0;background:#00152acc;display:none;align-items:center;justify-content:center;padding:12px;z-index:10}
-#modal{width:100%;max-width:440px;max-height:90%;overflow:auto;background:linear-gradient(#0753df,#20c9ef,#d4faff);border:5px solid white;border-radius:28px;padding:18px;text-align:center;color:#07358d;box-shadow:0 5px #06358d}
-#modal h2{color:white;text-shadow:2px 3px #07358d}
-.option{background:#e5fbff;border:2px solid #0c4aab;border-radius:13px;padding:12px;margin:8px 0;font-weight:bold}
-.small{font-size:12px}
-#nav{position:fixed;bottom:0;left:0;right:0;background:#e4faff;border-top:4px solid #1645b5;display:flex;justify-content:space-around;padding:8px 2px;z-index:4}
-#nav button{font-size:11px;padding:9px 7px}
-#toast{position:absolute;top:42%;left:50%;transform:translate(-50%,-50%);background:#073baf;border:3px solid white;border-radius:20px;padding:16px;font-weight:900;display:none;z-index:20;text-align:center}
-.country{font-size:45px}
+body{margin:0;background:#071c38;color:white;font-family:Arial;overflow:hidden;touch-action:none}
+#game{display:block;width:100vw;height:100dvh}
+#hud{position:fixed;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;gap:6px;pointer-events:none}
+.panel{background:#07172ddd;border:1px solid #ffffff44;border-radius:12px;padding:9px;font-size:13px}
+#mini{position:fixed;right:10px;top:65px;width:110px;height:110px;border:2px solid white;border-radius:10px;background:#07172d}
+#help{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:#07172ddd;padding:9px 14px;border-radius:20px;font-size:12px;white-space:nowrap}
+#lobby{position:fixed;inset:0;background:radial-gradient(circle,#164b70,#06152d 75%);display:flex;align-items:center;justify-content:center;text-align:center;padding:20px}
+#lobbyBox{width:min(420px,100%);background:#0c2341;border:1px solid #5be7d2;border-radius:25px;padding:25px;box-shadow:0 0 35px #00cdbb44}
+.logo{font-size:65px}
+h1{font-size:35px;margin:8px;color:#5be7d2}
+button{border:0;border-radius:14px;padding:14px 25px;background:#50e6c0;color:#062339;font-size:18px;font-weight:bold;margin:8px}
+#message{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#00152dcc;text-align:center}
+#messageBox{background:#102c4b;padding:25px;border-radius:20px;border:1px solid #50e6c0}
 </style>
 </head>
 <body>
+<canvas id="game"></canvas>
 
-<div id="screen">
- <div id="top">
-  <div class="counter">🪙 <span id="coins">0</span></div>
-  <div class="counter">💎 <span id="gems">0</span></div>
-  <button onclick="settings()">⚙️</button>
- </div>
- <div id="content">
-  <div class="logo">🦢 HB</div>
+<div id="hud" style="display:none">
+ <div class="panel">🏝️ HB LAND 18<br>Land: <span id="land">0</span>%</div>
+ <div class="panel">🪙 <span id="coins">0</span><br>🏆 <span id="kills">0</span> kills</div>
+ <div class="panel">LEVEL <span id="level">1</span></div>
+</div>
+<canvas id="mini" width="110" height="110" style="display:none"></canvas>
+<div id="help" style="display:none">👆 Drag in the direction you want to drive</div>
+
+<div id="lobby">
+ <div id="lobbyBox">
+  <div class="logo">🦢</div>
   <h1>HB LAND 18</h1>
-  <div class="subtitle">CLAIM YOUR WORLD!</div>
-  <div class="panel">
-   <div style="font-size:65px">🏎️</div>
-   <h2>WELCOME PLAYER!</h2>
-   <button style="width:100%;font-size:23px" onclick="countries()">▶ PLAY</button>
-   <div class="grid" style="margin-top:12px">
-    <button onclick="garage()">🚗 GARAGE</button>
-    <button onclick="profile()">👤 PROFILE</button>
-    <button onclick="shop()">🛒 SHOP</button>
-    <button onclick="missions()">🏆 MISSIONS</button>
-   </div>
-  </div>
-  <div class="panel">
-   <h2>YOUR PROGRESS</h2>
-   <div id="homeStats">Land: 0% | Level: 1</div>
-  </div>
+  <p>Build your land. Outsmart your rivals.</p>
+  <p>🏎️ 8 players · 🏝️ Territory battle</p>
+  <button onclick="startGame()">PLAY NOW</button>
+  <p style="font-size:12px;color:#b8d7e9">Local prototype with computer-controlled rivals</p>
  </div>
 </div>
 
-<div id="game">
- <canvas id="arena"></canvas>
- <div id="gamehud">
-  <div id="progress"><div id="fill"></div></div>
-  <div id="percent">0% CAPTURED</div>
- </div>
- <div id="board"></div>
- <div id="gamebuttons">
-  <button onclick="settings()">⚙️</button>
-  <button onclick="garage()">🚗 CAR</button>
-  <button onclick="home()">⌂ HOME</button>
+<div id="message">
+ <div id="messageBox">
+  <h1 id="result">GAME OVER</h1>
+  <p id="resultText"></p>
+  <button onclick="startGame()">PLAY AGAIN</button>
+  <button onclick="goLobby()">LOBBY</button>
  </div>
 </div>
-
-<div id="nav">
- <button onclick="shop()">🛒<br>SHOP</button>
- <button onclick="profile()">👤<br>PROFILE</button>
- <button onclick="home()">🏠<br>HOME</button>
- <button onclick="countries()">🌎<br>MAP</button>
- <button onclick="settings()">⚙️<br>SETTINGS</button>
-</div>
-
-<div id="overlay">
- <div id="modal">
-  <h2 id="modalTitle">HB LAND 18</h2>
-  <div id="modalBody"></div>
-  <button style="width:100%;margin-top:12px" onclick="closeModal()">✖ CLOSE</button>
- </div>
-</div>
-<div id="toast"></div>
 
 <script>
-const $=id=>document.getElementById(id);
-let data=JSON.parse(localStorage.getItem("hb18deluxe")||"null")||{
- coins:0,gems:0,car:0,owned:[0],name:"Player",kills:0,
- countries:0,captures:0,best:0,level:1
-};
-function save(){localStorage.setItem("hb18deluxe",JSON.stringify(data));refresh();}
-function refresh(){
- $("coins").textContent=data.coins;
- $("gems").textContent=data.gems;
- $("homeStats").textContent="Land: "+data.best.toFixed(1)+"% | Level: "+data.level;
-}
-refresh();
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+const mini=document.getElementById("mini");
+const mc=mini.getContext("2d");
 
-function modal(title,html){
- $("modalTitle").textContent=title;
- $("modalBody").innerHTML=html;
- $("overlay").style.display="flex";
+let W,H,dpr,players=[],running=false,coins=0,kills=0;
+let camera={x:0,y:0};
+let last=0,world=2400,cell=20;
+let land=new Map();
+let targetAngle=0;
+let pointer=null;
+let level=1;
+
+const colors=["#39f5c7","#ff5368","#ffd34f","#55a9ff","#bd75ff","#ff984e","#f77fc5","#a8e85b"];
+const names=["YOU","Alex","Ryan","Sam","Noah","Leo","Aiden","Max"];
+const cars=["🏎️","🚗","🏎️","🚙","🏎️","🚕","🏎️","🚓"];
+
+function resize(){
+ dpr=Math.min(devicePixelRatio||1,2);
+ W=innerWidth;H=innerHeight;
+ canvas.width=W*dpr;canvas.height=H*dpr;
+ canvas.style.width=W+"px";canvas.style.height=H+"px";
+ ctx.setTransform(dpr,0,0,dpr,0,0);
 }
-function closeModal(){$("overlay").style.display="none";}
+addEventListener("resize",resize);resize();
+
+function key(x,y){return Math.floor(x/cell)+","+Math.floor(y/cell)}
+function owned(x,y,id){return land.get(key(x,y))===id}
+function paint(x,y,id){land.set(key(x,y),id)}
+function inside(x,y){
+ let nx=(x-world/2)/(world*.47);
+ let ny=(y-world/2)/(world*.43);
+ return nx*nx+ny*ny<1;
+}
+function randomPosition(){
+ for(let i=0;i<500;i++){
+  let x=200+Math.random()*(world-400);
+  let y=200+Math.random()*(world-400);
+  if(inside(x,y)&&players.every(p=>Math.hypot(p.x-x,p.y-y)>250))return{x,y};
+ }
+ return{x:world/2,y:world/2};
+}
+function makePlayer(id,x,y){
+ return {id,name:names[id],x,y,angle:Math.random()*6.28,
+ speed:id===0?180:125,trail:[],alive:true,turn:0,ai:0,home:[]};
+}
+function startGame(){
+ land.clear();players=[];coins=0;kills=0;level=1;
+ const start={x:world/2,y:world/2};
+ players.push(makePlayer(0,start.x,start.y));
+ for(let i=1;i<8;i++){
+  let p=randomPosition();players.push(makePlayer(i,p.x,p.y));
+ }
+ for(let p of players){
+  for(let x=-3;x<=3;x++)for(let y=-3;y<=3;y++){
+   let px=p.x+x*cell,py=p.y+y*cell;
+   paint(px,py,p.id);p.home.push([px,py]);
+  }
+ }
+ document.getElementById("lobby").style.display="none";
+ document.getElementById("message").style.display="none";
+ document.getElementById("hud").style.display="flex";
+ document.getElementById("mini").style.display="block";
+ document.getElementById("help").style.display="block";
+ running=true;last=performance.now();requestAnimationFrame(loop);
+}
+function goLobby(){
+ running=false;
+ document.getElementById("message").style.display="none";
+ document.getElementById("lobby").style.display="flex";
+}
+function finish(win,reason){
+ if(!running)return;
+ running=false;
+ document.getElementById("result").textContent=win?"🏆 YOU WIN!":"GAME OVER";
+ document.getElementById("resultText").textContent=reason;
+ document.getElementById("message").style.display="flex";
+}
+function eliminate(victim,killer){
+ if(!victim.alive)return;
+ victim.alive=false;
+ victim.trail=[];
+ if(killer&&killer.id===0){
+  kills++;coins+=20;
+  for(let [k,v] of land)if(v===victim.id)land.set(k,0);
+  toast("Rival eliminated! +20 coins");
+ }else if(victim.id===0){
+  finish(false,"A rival touched your trail or car!");
+ }
+}
 function toast(s){
- $("toast").textContent=s;$("toast").style.display="block";
- setTimeout(()=>$("toast").style.display="none",1500);
+ document.getElementById("help").textContent=s;
 }
-function home(){
- stopGame();
- $("game").style.display="none";
- $("screen").style.display="block";
- $("nav").style.display="flex";
- closeModal();
+function steerHuman(){
+ if(pointer===null)return;
+ let p=players[0];
+ let dx=pointer.x-W/2,dy=pointer.y-H/2;
+ if(Math.hypot(dx,dy)>12)p.angle=Math.atan2(dy,dx);
 }
-function countries(){
- modal("🌎 CHOOSE A COUNTRY",`
- <p>Choose a country to play!</p>
- <div class="grid">
- <div class="tile"><span>🇮🇳</span>INDIA<button onclick="startGame('India')">PLAY</button></div>
- <div class="tile"><span>🇺🇸</span>USA<button onclick="startGame('USA')">PLAY</button></div>
- <div class="tile"><span>🇧🇷</span>BRAZIL<button onclick="startGame('Brazil')">PLAY</button></div>
- <div class="tile"><span>🇯🇵</span>JAPAN<button onclick="startGame('Japan')">PLAY</button></div>
- </div>`);
-}
-function settings(){
- modal("⚙️ SETTINGS",`
- <div class="option">🔊 SOUND <button onclick="toggleSetting(this)">ON</button></div>
- <div class="option">🎵 MUSIC <button onclick="toggleSetting(this)">ON</button></div>
- <div class="option">📳 VIBRATION <button onclick="toggleSetting(this)">ON</button></div>
- <div class="option">🗺️ MINIMAP <button onclick="toggleSetting(this)">ON</button></div>
- <p class="small">HB LAND 18 • VERSION 2.0</p>`);
-}
-function toggleSetting(b){b.textContent=b.textContent==="ON"?"OFF":"ON";}
-const cars=[
- ["🏎️","Blue Racer",0],
- ["🚗","Red Racer",250],
- ["🚙","Shadow Car",600],
- ["🚕","Golden Taxi",1000],
- ["🚘","Emerald GT",1500],
- ["🦢","Royal Swan",2200]
-];
-function garage(){
- let html='<p>Coins: 🪙 '+data.coins+'</p><div class="grid">';
- cars.forEach((c,i)=>{
- let owned=data.owned.includes(i);
- html+=`<div class="tile"><span>${c[0]}</span>${c[1]}<p>${owned?"OWNED":c[2]+" coins"}</p><button onclick="chooseCar(${i})">${data.car===i?"SELECTED":owned?"SELECT":"BUY"}</button></div>`;
- });
- html+='</div>';modal("🚗 CAR GARAGE",html);
-}
-function chooseCar(i){
- if(data.owned.includes(i)){data.car=i;save();garage();return;}
- if(data.coins>=cars[i][2]){
- data.coins-=cars[i][2];data.owned.push(i);data.car=i;save();garage();
- }else toast("Not enough coins!");
-}
-function shop(){
- modal("🛒 HB SHOP",`
- <p>🪙 COINS: ${data.coins} &nbsp; 💎 GEMS: ${data.gems}</p>
- <div class="grid">
- <div class="tile"><span>🪙</span>500 COINS<br><small>Free reward</small><button onclick="reward(500)">CLAIM</button></div>
- <div class="tile"><span>🪙</span>1500 COINS<br><small>Free reward</small><button onclick="reward(1500)">CLAIM</button></div>
- <div class="tile"><span>💎</span>5 GEMS<br><small>Game reward</small><button onclick="rewardGems()">CLAIM</button></div>
- </div>
- <p class="small">These are in-game rewards. No real-money purchases.</p>`);
-}
-function reward(n){
- if(sessionStorage.getItem("hbReward"+n)){toast("Reward already claimed!");return;}
- sessionStorage.setItem("hbReward"+n,"yes");data.coins+=n;save();shop();
-}
-function rewardGems(){
- if(sessionStorage.getItem("hbGems")){toast("Already claimed!");return;}
- sessionStorage.setItem("hbGems","yes");data.gems+=5;save();shop();
-}
-function profile(){
- modal("👤 PLAYER PROFILE",`
- <div class="panel">
- <div style="font-size:50px">🐼</div>
- <h2>${data.name}</h2>
- <button onclick="rename()">✏️ CHANGE NAME</button>
- </div>
- <div class="grid">
- <div class="tile">🏅 LEAGUE<br>BRONZE I</div>
- <div class="tile">💀 KILLS<br>${data.kills}</div>
- <div class="tile">🌎 COUNTRIES<br>${data.countries}</div>
- <div class="tile">🏆 BEST LAND<br>${data.best.toFixed(1)}%</div>
- </div>`);
-}
-function rename(){
- let n=prompt("Enter player name:",data.name);
- if(n&&n.trim()){data.name=n.trim().slice(0,18);save();profile();}
-}
-function missions(){
- modal("🏆 MISSIONS",`
- <div class="option">🎯 Capture 5% land<br>Reward: 100 coins</div>
- <div class="option">🚗 Play one round<br>Reward: 50 coins</div>
- <div class="option">🌎 Explore countries<br>Reward: 100 coins</div>
- <p>Capture land to earn coins!</p>`);
-}
+function update(dt){
+ let me=players[0];
+ if(!me||!me.alive)return;
+ steerHuman();
 
-/* GAME ENGINE */
-const canvas=$("arena"),ctx=canvas.getContext("2d");
-const SIZE=100;
-let map=[],bots=[],me={},trail=[],running=false,timer=null;
-let cell=20,camX=0,camY=0,dir={x:1,y:0},pointer=null,countryName="India";
-const colors=["#ffce24","#25c8e7","#f17bc9","#23b879","#a37cf1"];
-function index(x,y){return y*SIZE+x;}
-function inside(x,y){return x>=0&&y>=0&&x<SIZE&&y<SIZE;}
+ for(let p of players){
+  if(!p.alive)continue;
+  if(p.id!==0){
+   p.ai-=dt;
+   if(p.ai<=0){
+    p.ai=.8+Math.random()*2;
+    p.angle+=(Math.random()-.5)*1.5;
+   }
+  }
+  let oldX=p.x,oldY=p.y;
+  p.x+=Math.cos(p.angle)*p.speed*dt;
+  p.y+=Math.sin(p.angle)*p.speed*dt;
+
+  if(!inside(p.x,p.y)){
+   p.angle+=Math.PI*(.65+Math.random()*.7);
+   p.x=oldX;p.y=oldY;
+  }
+
+  if(Math.abs(p.x-oldX)+Math.abs(p.y-oldY)>0){
+   if(!owned(p.x,p.y,p.id)){
+    let lastPoint=p.trail[p.trail.length-1];
+    if(!lastPoint||Math.hypot(p.x-lastPoint.x,p.y-lastPoint.y)>5){
+     p.trail.push({x:p.x,y:p.y});
+    }
+   }else if(p.trail.length){
+    capture(p);
+   }
+  }
+ }
+ combat();
+ camera.x=me.x-W/2;
+ camera.y=me.y-H/2;
+ camera.x=Math.max(0,Math.min(world-W,camera.x));
+ camera.y=Math.max(0,Math.min(world-H,camera.y));
+}
+function capture(p){
+ let gained=0;
+ for(let pt of p.trail){
+  let x=pt.x,y=pt.y;
+  for(let ox=-2;ox<=2;ox++)for(let oy=-2;oy<=2;oy++){
+   let xx=x+ox*cell,yy=y+oy*cell;
+   if(inside(xx,yy)&&!owned(xx,yy,p.id)){
+    paint(xx,yy,p.id);gained++;
+   }
+  }
+ }
+ if(p.id===0){
+  coins+=gained*5;
+  toast("Territory captured! +"+(gained*5)+" coins");
+ }
+ p.trail=[];
+}
+function combat(){
+ const me=players[0];
+ if(!me||!me.alive)return;
+
+ // Both directions: the player touching a rival's trail dies.
+ for(let r of players.slice(1)){
+  if(!r.alive)continue;
+  if(touchesTrail(me,r.trail)){
+   eliminate(me,r);return;
+  }
+ }
+ // If your car touches a rival's trail, that rival dies.
+ for(let r of players.slice(1)){
+  if(!r.alive)continue;
+  if(touchesTrail(r,me.trail))eliminate(r,me);
+ }
+ // A player's trail touching another player's car eliminates the car.
+ for(let r of players.slice(1)){
+  if(!r.alive)continue;
+  if(touchesTrail(r,me.trail))eliminate(r,me);
+  for(let other of players.slice(1)){
+   if(other!==r&&other.alive&&touchesTrail(other,r.trail)){
+    eliminate(r,other);
+   }
+  }
+ }
+}
+function touchesTrail(player,trail){
+ for(let pt of trail){
+  if(Math.hypot(player.x-pt.x,player.y-pt.y)<17)return true;
+ }
+ return false;
+}
+function draw(){
+ ctx.fillStyle="#0876b9";ctx.fillRect(0,0,W,H);
+ ctx.save();ctx.translate(-camera.x,-camera.y);
+
+ // Island
+ ctx.beginPath();
+ for(let a=0;a<=Math.PI*2+.01;a+=.02){
+  let wobble=1+.025*Math.sin(a*7)+.018*Math.cos(a*11);
+  let x=world/2+Math.cos(a)*world*.47*wobble;
+  let y=world/2+Math.sin(a)*world*.43*wobble;
+  if(a===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+ }
+ ctx.closePath();ctx.fillStyle="#d2c47a";ctx.fill();
+ ctx.strokeStyle="#fff0a8";ctx.lineWidth=22;ctx.stroke();
+
+ // Territory
+ for(let [k,id] of land){
+  let [gx,gy]=k.split(",").map(Number);
+  ctx.fillStyle=colors[id];
+  ctx.globalAlpha=.82;
+  ctx.fillRect(gx*cell,gy*cell,cell+1,cell+1);
+ }
+ ctx.globalAlpha=1;
+
+ // Trails: bright outline and coloured core
+ for(let p of players){
+  if(!p.alive||!p.trail.length)continue;
+  ctx.beginPath();
+  ctx.moveTo(p.trail[0].x,p.trail[0].y);
+  for(let pt of p.trail)ctx.lineTo(pt.x,pt.y);
+  ctx.lineTo(p.x,p.y);
+  ctx.lineCap="round";ctx.lineJoin="round";
+  ctx.strokeStyle="white";ctx.lineWidth=22;ctx.stroke();
+  ctx.strokeStyle=colors[p.id];ctx.lineWidth=13;ctx.stroke();
+ }
+
+ // Cars
+ for(let p of players){
+  if(!p.alive)continue;
+  ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle);
+  ctx.font="38px Arial";ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.shadowColor="#000";ctx.shadowBlur=8;
+  ctx.fillText(cars[p.id],0,0);
+  ctx.restore();
+  ctx.fillStyle="white";ctx.font="bold 13px Arial";
+  ctx.textAlign="center";ctx.fillText(p.name,p.x,p.y-29);
+ }
+ ctx.restore();
+ drawMini();
+ document.getElementById("coins").textContent=coins;
+ document.getElementById("kills").textContent=kills;
+ document.getElementById("land").textContent=Math.min(100,Math.floor([...land.values()].filter(v=>v===0).length/400));
+ document.getElementById("level").textContent=level;
+}
+function drawMini(){
+ mc.fillStyle="#0876b9";mc.fillRect(0,0,110,110);
+ mc.fillStyle="#c9bb73";mc.beginPath();mc.ellipse(55,55,49,44,0,0,Math.PI*2);mc.fill();
+ for(let p of players){
+  if(!p.alive)continue;
+  mc.fillStyle=colors[p.id];
+  mc.beginPath();mc.arc(p.x/world*110,p.y/world*110,3,0,Math.PI*2);mc.fill();
+ }
+}
+function loop(t){
+ if(!running)return;
+ let dt=Math.min((t-last)/1000,.04);last=t;
+ update(dt);draw();
+ requestAnimationFrame(loop);
+}
+canvas.addEventListener("pointerdown",e=>{
+ pointer={x:e.clientX,y:e.clientY};
+ canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener("pointermove",e=>{
+ if(pointer)pointer={x:e.clientX,y:e.clientY};
+});
+canvas.addEventListener("pointerup",()=>pointer=null);
+canvas.addEventListener("pointercancel",()=>pointer=null);
+</script>
+</body>
+</html>
+0&&y>=0&&x<SIZE&&y<SIZE;}
 function paintHome(p){
  for(let y=-3;y<=3;y++)for(let x=-3;x<=3;x++){
  if(inside(p.x+x,p.y+y))map[index(p.x+x,p.y+y)]=p.id;
