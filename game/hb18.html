@@ -1,787 +1,153 @@
-
 <!DOCTYPE html>
 <html lang="en">
- <link rel="icon" type="image/png" href="/HB/icons/icon-192.png">
-<link rel="apple-touch-icon" href="/HB/icons/icon-192.png">
-<meta name="theme-color" content="#080d1b">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>HB LAND 18</title>
- <link rel="manifest" href="/HB/manifest.json">
 <meta name="theme-color" content="#080d1b">
+<title>HB LAND 18</title>
+<link rel="manifest" href="/HB/manifest.json">
 <style>
-*{box-sizing:border-box}
-body{margin:0;background:#101827;color:white;font-family:Arial;overflow:hidden;touch-action:none}
-header{height:65px;background:#17243a;display:flex;align-items:center;justify-content:space-around}
-h1{color:#50e6c0;letter-spacing:3px;font-size:23px}
-.stat{text-align:center;font-size:10px;color:#b8c8dc}
-.stat b{display:block;color:white;font-size:16px;margin-top:4px}
-#game{display:block;width:100vw;height:calc(100dvh - 65px);touch-action:none}
-#minimap{
- position:fixed;right:10px;top:78px;
- width:112px;height:112px;
- border:2px solid white;border-radius:9px;
- background:#17243a;opacity:.96;
-}
-#leader{
- position:fixed;left:9px;top:78px;
- background:#142238dd;padding:8px;
- border-radius:9px;font-size:10px;line-height:17px;
- pointer-events:none;
-}
-#restart{
- position:fixed;left:9px;bottom:16px;
- background:#50e6c0;color:#102033;
- border:0;border-radius:9px;padding:10px 13px;font-weight:bold;
- display:none;
-}
-#hint{
- position:fixed;bottom:17px;left:50%;
- transform:translateX(-50%);
- background:#17243add;padding:9px 13px;
- border-radius:20px;font-size:11px;
- pointer-events:none;white-space:nowrap;
- display:none;
-}
-#levelbar{
- position:fixed;top:65px;left:50%;transform:translateX(-50%);
- width:145px;height:5px;background:#34445c;border-radius:5px;
- overflow:hidden;
-}
-#levelprogress{height:100%;width:0;background:#50e6c0}
-#levelup{
- display:none;position:fixed;top:42%;left:50%;
- transform:translate(-50%,-50%);
- background:#17243aee;border:2px solid #50e6c0;
- color:#50e6c0;padding:18px 25px;border-radius:16px;
- font-size:22px;font-weight:bold;pointer-events:none;
-}
-
-/* HB LAND 18 WELCOME SCREEN */
-#welcome{
- position:fixed;inset:0;z-index:1000;
- background:
- radial-gradient(ellipse at 50% 35%,#173b65 0%,#0b1930 45%,#050b18 100%);
- display:flex;align-items:center;justify-content:center;
- text-align:center;padding:24px;
-}
-.welcome-content{
- width:100%;max-width:420px;
- display:flex;flex-direction:column;align-items:center;
-}
-.swan{
- font-size:92px;line-height:1.2;
- filter:drop-shadow(0 0 18px #38bdf8);
-}
-.logo-text{
- font-size:48px;font-weight:900;
- letter-spacing:8px;color:#54c9ff;
- text-shadow:0 0 12px #168bff,0 0 30px #0875d1;
- margin-top:2px;
-}
-.welcome-title{
- font-size:clamp(27px,8vw,39px);
- letter-spacing:3px;color:white;
- font-weight:900;margin:30px 0 10px;
- text-shadow:0 0 18px #258bdc;
-}
-.welcome-subtitle{
- color:#a8d8ff;font-size:13px;
- letter-spacing:4px;margin:10px 0 34px;
-}
-#startButton{
- border:0;border-radius:14px;
- padding:17px 35px;
- background:linear-gradient(135deg,#27b8ff,#0871dc);
- color:white;font-size:17px;font-weight:900;
- letter-spacing:2px;
- box-shadow:0 0 20px #168bff88,0 7px 22px #0008;
- cursor:pointer;
-}
-#startButton:active{transform:scale(.96)}
-.welcome-footer{
- margin-top:35px;color:#6689ad;
- font-size:11px;letter-spacing:3px;
-}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080d1b;color:#fff;font-family:Arial,sans-serif;touch-action:none}
+button{border:0;border-radius:12px;padding:12px 16px;font-weight:800;background:linear-gradient(135deg,#f5d77d,#b88628);color:#101827}
+#game{display:block;width:100vw;height:100dvh;background:#26364c}
+#hud{position:fixed;top:8px;left:8px;right:8px;display:flex;gap:7px;align-items:center;justify-content:space-between;pointer-events:none}
+.pill{background:#101c35eF;border:1px solid #c99b35;border-radius:10px;padding:7px 9px;font-size:12px}
+#mini{position:fixed;right:9px;top:58px;width:105px;height:105px;border:2px solid #e4bd58;border-radius:9px;background:#101c35}
+#leader{position:fixed;left:9px;top:58px;padding:8px;background:#101c35df;border-radius:9px;font-size:10px;line-height:16px;pointer-events:none}
+#hint{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:#101c35df;padding:9px 13px;border-radius:20px;font-size:11px;white-space:nowrap;pointer-events:none}
+#lobby,#panel{position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:18px;background:radial-gradient(ellipse at 50% 30%,#183a65,#0b1930 55%,#050b18)}
+.card{width:min(440px,100%);max-height:92dvh;overflow:auto;text-align:center;padding:24px 18px;border:2px solid #c99b35;border-radius:23px;background:linear-gradient(145deg,#142541,#080d1b);box-shadow:0 0 30px #c99b3544}
+.swan{font-size:60px}.brand{font-size:43px;letter-spacing:7px;color:#e9bd55;font-weight:1000;text-shadow:0 0 18px #d6a83b}
+h1{font-size:25px;margin:6px 0 8px} .sub{color:#d6ad50;letter-spacing:3px;font-size:11px;margin:12px 0 20px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+.actions button,.wide{width:100%}
+.secondary{background:#1b2b48;color:#f3ca65;border:1px solid #80642c}
+#panel{display:none;background:#050b18eF;z-index:8}
+#panel .card{text-align:left}
+#panel h2{text-align:center;color:#f3ca65;margin-top:0}
+.car-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.car{background:#1b2b48;border:1px solid #52617a;border-radius:12px;padding:12px;text-align:center}
+.car .emoji{font-size:38px}.car small{display:block;color:#c5d1e2;margin:6px}
+#toast{position:fixed;top:45%;left:50%;transform:translate(-50%,-50%);z-index:10;background:#101c35;border:2px solid #e9bd55;border-radius:14px;padding:15px;display:none;text-align:center}
+@media(min-width:700px){#game{height:100dvh}}
 </style>
 </head>
 <body>
+<canvas id="game"></canvas>
+<div id="hud" style="display:none">
+ <div class="pill">LAND <b id="score">0%</b></div>
+ <div class="pill">LEVEL <b id="level">1</b></div>
+ <div class="pill">🪙 <b id="coins">0</b></div>
+ <button id="shopBtn" style="pointer-events:auto;padding:9px 12px">GARAGE</button>
+</div>
+<canvas id="mini" width="160" height="160" style="display:none"></canvas>
+<div id="leader" style="display:none"></div>
+<div id="hint" style="display:none">Drag on the arena to steer your car</div>
 
-<!-- FIRST PAGE -->
-<div id="welcome">
- <div class="welcome-content">
-  <div class="swan">🦢</div>
-  <div class="logo-text">HB</div>
-
-  <div class="welcome-title">WELCOME TO<br>HB LAND 18</div>
-
-  <div class="welcome-subtitle">
-   PLAY • EXPLORE • CONQUER
+<div id="lobby">
+ <div class="card">
+  <div class="swan">🦢</div><div class="brand">HB</div>
+  <h1>HB LAND 18</h1><div class="sub">DRIVE • CLAIM • CONQUER</div>
+  <div class="actions">
+   <button id="play">▶ PLAY</button><button class="secondary" id="garageLobby">🚗 GARAGE</button>
+   <button class="secondary" id="missions">🏆 MISSIONS</button><button class="secondary" id="help">❔ HOW TO PLAY</button>
   </div>
-
-  <button id="startButton">▶ START PLAYING</button>
-
-  <div class="welcome-footer">THE ADVENTURE BEGINS HERE</div>
+  <div style="color:#9fb4d0;font-size:11px;letter-spacing:2px">THE ADVENTURE BEGINS HERE</div>
  </div>
 </div>
 
-<header>
- <h1>HB LAND 18</h1>
- <div class="stat">LAND<b id="score">0%</b></div>
- <div class="stat">LEVEL<b id="level">1</b></div>
- <div class="stat">RANK<b id="rank">1</b></div>
-</header>
-
-<div id="levelbar"><div id="levelprogress"></div></div>
-<canvas id="game"></canvas>
-<canvas id="minimap" width="160" height="160"></canvas>
-<div id="leader"></div>
-<div id="levelup">LEVEL UP!</div>
-<button id="restart">RESTART</button>
-<div id="hint">👆 Drag your finger to steer</div>
+<div id="panel"><div class="card">
+ <h2 id="panelTitle">🚗 CAR GARAGE</h2>
+ <div id="panelBody"></div>
+ <button class="wide" id="closePanel" style="margin-top:14px">BACK</button>
+</div></div>
+<div id="toast"></div>
 
 <script>
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
-const mini=document.getElementById("minimap");
-const mctx=mini.getContext("2d");
-
-const WORLD=240;
-const CELL=20;
-const TOTAL=WORLD*WORLD;
-const EMPTY=-1;
-
-const colors=["#20c9a5","#ff5575","#ffca42","#638cff","#c277ff"];
-const names=["YOU","RED","GOLD","BLUE","PURPLE"];
-
-let land,players,timer,tick=0;
-let finger=null;
-let direction={x:1,y:0};
-let viewW=innerWidth,viewH=innerHeight-65;
-let previousLevel=1;
-let gameOver=false;
-let gameStarted=false;
-
-const levelTargets=[0,3,6,10,15,22,30,40,50,60,70,80];
-
-function id(x,y){return y*WORLD+x}
-function inside(x,y){return x>=0&&y>=0&&x<WORLD&&y<WORLD}
-
-function resize(){
- const dpr=Math.min(devicePixelRatio||1,1.5);
- viewW=innerWidth;
- viewH=innerHeight-65;
- canvas.width=Math.floor(viewW*dpr);
- canvas.height=Math.floor(viewH*dpr);
- canvas.style.width=viewW+"px";
- canvas.style.height=viewH+"px";
- ctx.setTransform(dpr,0,0,dpr,0,0);
+"use strict";
+const canvas=document.getElementById("game"),ctx=canvas.getContext("2d");
+const mini=document.getElementById("mini"),mctx=mini.getContext("2d");
+const N=100,CELL=24,TOTAL=N*N,EMPTY=-1;
+const palette=["#27c9a5","#ff5575","#ffca42","#638cff","#c277ff"];
+const names=["YOU","RED BOT","GOLD BOT","BLUE BOT","PURPLE BOT"];
+const cars=[
+ {name:"Blue Racer",emoji:"🏎️",price:0,color:"#36bfff"},
+ {name:"Red Beast",emoji:"🚗",price:250,color:"#ff5268"},
+ {name:"Golden King",emoji:"🏎️",price:600,color:"#f4c64e"},
+ {name:"Shadow X",emoji:"🚙",price:1000,color:"#a6b2c5"},
+ {name:"Emerald GT",emoji:"🚘",price:1500,color:"#42d69a"},
+ {name:"Royal Swan",emoji:"🦢",price:2200,color:"#f3e5bd"}
+];
+let save=JSON.parse(localStorage.getItem("hbl18_save")||"null")||{coins:0,owned:[0],selected:0,captures:0,level:1};
+function persist(){localStorage.setItem("hbl18_save",JSON.stringify(save));}
+let land=new Int8Array(TOTAL).fill(EMPTY),players=[],tick=0,loop=null,started=false,gameOver=false;
+let dir={x:1,y:0},finger=null,viewW=innerWidth,viewH=innerHeight;
+function resize(){let d=Math.min(devicePixelRatio||1,1.5);viewW=innerWidth;viewH=innerHeight;canvas.width=viewW*d;canvas.height=viewH*d;ctx.setTransform(d,0,0,d,0,0);}
+addEventListener("resize",resize);resize();
+const idx=(x,y)=>y*N+x,inside=(x,y)=>x>=0&&y>=0&&x<N&&y<N;
+function player(i,x,y,dx,dy){return{i,x,y,dx,dy,trail:[],alive:true,turnAt:0};}
+function home(p){for(let y=-3;y<=3;y++)for(let x=-3;x<=3;x++)if(inside(p.x+x,p.y+y))land[idx(p.x+x,p.y+y)]=p.i;}
+function reset(){
+ clearInterval(loop);land.fill(EMPTY);players=[player(0,50,50,1,0),player(1,18,18,1,0),player(2,82,18,-1,0),player(3,18,82,1,0),player(4,82,82,-1,0)];
+ players.forEach(home);dir={x:1,y:0};tick=0;gameOver=false;started=true;
+ document.getElementById("lobby").style.display="none";document.getElementById("hud").style.display="flex";mini.style.display="block";document.getElementById("leader").style.display="block";document.getElementById("hint").style.display="block";
+ update();draw();loop=setInterval(step,115);
 }
-addEventListener("resize",resize);
-resize();
-
-function makePlayer(i,x,y,dx,dy){
- return {i,x,y,dx,dy,trail:[],alive:true,
-  color:colors[i],name:names[i],turnAt:0};
-}
-
-function paintHome(p){
- for(let y=-3;y<=3;y++){
-  for(let x=-3;x<=3;x++){
-   const xx=p.x+x,yy=p.y+y;
-   if(inside(xx,yy))land[id(xx,yy)]=p.i;
-  }
- }
-}
-
-function safeSpawn(p){
- for(let attempt=0;attempt<5000;attempt++){
-  const x=8+Math.floor(Math.random()*(WORLD-16));
-  const y=8+Math.floor(Math.random()*(WORLD-16));
-  let safe=true;
-
-  for(const other of players){
-   if(other!==p&&other.alive&&Math.hypot(other.x-x,other.y-y)<35){
-    safe=false;break;
-   }
-  }
-  if(!safe)continue;
-
-  for(let yy=-4;yy<=4&&safe;yy++){
-   for(let xx=-4;xx<=4;xx++){
-    if(land[id(x+xx,y+yy)]!==EMPTY){safe=false;break;}
-   }
-  }
-
-  if(safe){
-   p.x=x;p.y=y;p.dx=1;p.dy=0;
-   // HB LAND 18 MISSION & COINS
-if(p.i===0){
- let data=JSON.parse(localStorage.getItem("hb18_rewards")||'{"coins":0,"captures":0,"completed":false}');
-
- if(!data.completed){
-  data.captures++;
-
-  if(data.captures>=3){
-   data.coins+=100;
-   data.completed=true;
-   alert("🏆 MISSION COMPLETED!\n🪙 You earned 100 coins!");
-  }else{
-   alert("🎯 Mission Progress: "+data.captures+"/3 captures");
-  }
- }
-
- localStorage.setItem("hb18_rewards",JSON.stringify(data));
-}
-   p.trail=[];p.alive=true;paintHome(p);
-   return true;
-  }
- }
- return false;
-}
-
-function start(){
- clearInterval(timer);
- land=new Int16Array(TOTAL);
- land.fill(EMPTY);
-
- players=[
-  makePlayer(0,120,120,1,0),
-  makePlayer(1,65,65,1,0),
-  makePlayer(2,175,65,-1,0),
-  makePlayer(3,65,175,1,0),
-  makePlayer(4,175,175,-1,0)
- ];
- players.forEach(p=>paintHome(p));
-
- direction={x:1,y:0};
- finger=null;tick=0;gameOver=false;
- previousLevel=1;
-
- document.getElementById("hint").textContent="👆 Drag your finger to steer";
- document.getElementById("levelup").style.display="none";
- document.getElementById("restart").style.display="block";
- document.getElementById("hint").style.display="block";
-
- updateStats();draw();
- timer=setInterval(gameLoop,105);
-}
-
-function beginGame(){
- if(gameStarted)return;
- gameStarted=true;
- document.getElementById("welcome").style.display="none";
- start();
-}
-
-document.getElementById("startButton").addEventListener("click",beginGame);
-
-// Finger movement: drag in the direction you want to travel.
-function steer(x,y){
- if(gameOver)return;
- if(x===-direction.x&&y===-direction.y)return;
- direction={x,y};
- players[0].dx=x;
- players[0].dy=y;
-}
-
-canvas.addEventListener("pointerdown",e=>{
- e.preventDefault();
- finger={x:e.clientX,y:e.clientY};
- try{canvas.setPointerCapture(e.pointerId)}catch(err){}
-},{passive:false});
-
-canvas.addEventListener("pointermove",e=>{
- if(!finger)return;
- e.preventDefault();
- const dx=e.clientX-finger.x;
- const dy=e.clientY-finger.y;
-
- if(Math.max(Math.abs(dx),Math.abs(dy))>12){
-  if(Math.abs(dx)>Math.abs(dy))steer(dx>0?1:-1,0);
-  else steer(0,dy>0?1:-1);
-  finger={x:e.clientX,y:e.clientY};
- }
-},{passive:false});
-
-canvas.addEventListener("pointerup",()=>finger=null);
-canvas.addEventListener("pointercancel",()=>finger=null);
-
-// Capture enclosed empty territory.
+function steer(x,y){if(x===-dir.x&&y===-dir.y)return;dir={x,y};players[0].dx=x;players[0].dy=y;}
+canvas.addEventListener("pointerdown",e=>{if(!started)return;finger={x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);});
+canvas.addEventListener("pointermove",e=>{if(!finger||!started)return;let dx=e.clientX-finger.x,dy=e.clientY-finger.y;if(Math.max(Math.abs(dx),Math.abs(dy))>13){if(Math.abs(dx)>Math.abs(dy))steer(dx>0?1:-1,0);else steer(0,dy>0?1:-1);finger={x:e.clientX,y:e.clientY};}});
+canvas.addEventListener("pointerup",()=>finger=null);canvas.addEventListener("pointercancel",()=>finger=null);
 function capture(p){
- const blocked=new Uint8Array(TOTAL);
- const outside=new Uint8Array(TOTAL);
- const queue=new Int32Array(TOTAL);
- let head=0,tail=0;
-
+ const blocked=new Uint8Array(TOTAL),outside=new Uint8Array(TOTAL),q=new Int32Array(TOTAL);let h=0,t=0;
  for(let i=0;i<TOTAL;i++)blocked[i]=land[i]===p.i?1:0;
- for(const cell of p.trail)blocked[cell]=1;
-
- function add(i){
-  if(!blocked[i]&&!outside[i]){
-   outside[i]=1;queue[tail++]=i;
-  }
- }
-
- for(let x=0;x<WORLD;x++){
-  add(id(x,0));add(id(x,WORLD-1));
- }
- for(let y=0;y<WORLD;y++){
-  add(id(0,y));add(id(WORLD-1,y));
- }
-
- while(head<tail){
-  const i=queue[head++];
-  const x=i%WORLD,y=Math.floor(i/WORLD);
-  if(x>0)add(i-1);
-  if(x<WORLD-1)add(i+1);
-  if(y>0)add(i-WORLD);
-  if(y<WORLD-1)add(i+WORLD);
- }
-
- for(let i=0;i<TOTAL;i++){
-  if(!outside[i])land[i]=p.i;
- }
- p.trail=[];
+ for(const c of p.trail)blocked[c]=1;
+ function add(i){if(!blocked[i]&&!outside[i]){outside[i]=1;q[t++]=i;}}
+ for(let x=0;x<N;x++){add(idx(x,0));add(idx(x,N-1));}
+ for(let y=0;y<N;y++){add(idx(0,y));add(idx(N-1,y));}
+ while(h<t){let i=q[h++],x=i%N,y=(i/N)|0;if(x)add(i-1);if(x<N-1)add(i+1);if(y)add(i-N);if(y<N-1)add(i+N);}
+ let gained=0;for(let i=0;i<TOTAL;i++)if(!outside[i]&&land[i]!==p.i){land[i]=p.i;gained++;}
+ p.trail=[];if(p.i===0&&gained>0){let reward=Math.max(5,Math.floor(gained/12));save.coins+=reward;save.captures++;persist();toast("+"+reward+" COINS! TERRITORY CLAIMED");}
 }
-
-// Eliminated player loses all territory.
-// Killer receives every cell the victim owned.
-function eliminate(victim,killer=null){
- if(!victim.alive)return;
- victim.alive=false;
- victim.trail=[];
-
- for(let i=0;i<TOTAL;i++){
-  if(land[i]===victim.i){
-   land[i]=killer?killer.i:EMPTY;
-  }
- }
-
- if(victim.i===0){
-  document.getElementById("hint").textContent=
-   killer?"You were eliminated! Respawning...":"You lost your trail! Respawning...";
- }else{
-  document.getElementById("hint").textContent=
-   killer?killer.name+" captured "+victim.name+"'s land!":"An opponent was eliminated!";
- }
-
- updateStats();
-
- setTimeout(()=>{
-  if(gameOver)return;
-  if(safeSpawn(victim)){
-   if(victim.i===0){
-    direction={x:1,y:0};
-    document.getElementById("hint").textContent="👆 Drag your finger to steer";
-   }
-   updateStats();draw();
-  }
- },1100);
-}
-
-function botTurn(p){
- const choices=[
-  {x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}
- ];
- let possible=choices.filter(d=>
-  !(d.x===-p.dx&&d.y===-p.dy)&&inside(p.x+d.x,p.y+d.y)
- );
-
- if(!possible.length){p.dx=-p.dx;p.dy=-p.dy;return;}
-
- if(tick>=p.turnAt){
-  const safe=possible.filter(d=>land[id(p.x+d.x,p.y+d.y)]!==p.i);
-  const list=safe.length?safe:possible;
-  const choice=list[Math.floor(Math.random()*list.length)];
-  p.dx=choice.x;p.dy=choice.y;
-  p.turnAt=tick+5+Math.floor(Math.random()*13);
- }
-}
-
+function eliminate(p){p.alive=false;p.trail=[];for(let i=0;i<TOTAL;i++)if(land[i]===p.i)land[i]=EMPTY;setTimeout(()=>{if(!started)return;p.x=10+Math.random()*80|0;p.y=10+Math.random()*80|0;p.dx=1;p.dy=0;p.alive=true;home(p);if(p.i===0){dir={x:1,y:0};toast("Car respawned!");}draw();},900);}
+function botTurn(p){if(tick<p.turnAt)return;let opts=[{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}].filter(d=>!(d.x===-p.dx&&d.y===-p.dy)&&inside(p.x+d.x,p.y+d.y));if(opts.length){let safe=opts.filter(d=>land[idx(p.x+d.x,p.y+d.y)]!==p.i);let d=(safe.length?safe:opts)[Math.random()*(safe.length||opts.length)|0];p.dx=d.x;p.dy=d.y;}p.turnAt=tick+5+(Math.random()*10|0);}
 function move(p){
- if(!p.alive)return;
- if(p.i!==0)botTurn(p);
-
- const nx=p.x+p.dx,ny=p.y+p.dy;
- if(!inside(nx,ny)){
-  p.dx=-p.dx;p.dy=-p.dy;
-  if(p.i===0)direction={x:p.dx,y:p.dy};
-  return;
- }
-
- const next=id(nx,ny);
-
- if(p.trail.includes(next)){
-  eliminate(p,null);
-  return;
- }
-
- // Entering an enemy trail eliminates its owner.
- for(const enemy of players){
-  if(enemy!==p&&enemy.alive&&enemy.trail.includes(next)){
-   eliminate(enemy,p);
-  }
- }
-
- p.x=nx;p.y=ny;
-
- if(land[next]===p.i){
-  if(p.trail.length)capture(p);
- }else{
-  p.trail.push(next);
- }
-
- for(const enemy of players){
-  if(enemy!==p&&enemy.alive&&enemy.trail.includes(id(p.x,p.y))){
-   eliminate(enemy,p);
-  }
- }
+ if(!p.alive)return;if(p.i)botTurn(p);
+ let x=p.x+p.dx,y=p.y+p.dy;if(!inside(x,y)){p.dx=-p.dx;p.dy=-p.dy;return;}
+ let n=idx(x,y);if(p.trail.includes(n)){eliminate(p);return;}
+ for(const e of players)if(e!==p&&e.alive&&e.trail.includes(n))eliminate(e);
+ p.x=x;p.y=y;
+ if(land[n]===p.i){if(p.trail.length)capture(p);}else p.trail.push(n);
+ for(const e of players)if(e!==p&&e.alive&&e.trail.includes(n))eliminate(e);
 }
-
-function getCounts(){
- const counts=players.map(()=>0);
- for(let i=0;i<TOTAL;i++){
-  if(land[i]>=0)counts[land[i]]++;
- }
- return counts;
+function drawCar(p,cx,cy){
+ ctx.save();ctx.translate(cx,cy);let angle=p.dx===1?0:p.dx===-1?Math.PI:p.dy===1?Math.PI/2:-Math.PI/2;ctx.rotate(angle);
+ ctx.shadowColor="#000";ctx.shadowBlur=7;
+ ctx.fillStyle="#111827";ctx.fillRect(-10,-8,20,16);
+ ctx.fillStyle=p.i===0?cars[save.selected].color:palette[p.i];ctx.beginPath();ctx.roundRect(-9,-7,18,14,5);ctx.fill();
+ ctx.fillStyle="#d9f2ff";ctx.fillRect(-3,-5,7,10);
+ ctx.fillStyle="#fff5c2";ctx.fillRect(7,-5,2,3);ctx.fillRect(7,2,2,3);
+ ctx.restore();
 }
-
-function updateStats(){
- const counts=getCounts();
- const percent=counts[0]/TOTAL*100;
- const level=1+levelTargets.filter(v=>percent>=v&&v>0).length;
-
- document.getElementById("score").textContent=percent.toFixed(1)+"%";
- document.getElementById("level").textContent=level;
-
- const sorted=[...counts].sort((a,b)=>b-a);
- document.getElementById("rank").textContent=sorted.indexOf(counts[0])+1;
-
- const target=levelTargets[Math.min(level,levelTargets.length-1)]||100;
- const previous=levelTargets[level-1]||0;
- const progress=target>previous?
-  Math.max(0,Math.min(100,(percent-previous)/(target-previous)*100)):100;
- document.getElementById("levelprogress").style.width=progress+"%";
-
- if(level>previousLevel){
-  document.getElementById("levelup").style.display="block";
-  document.getElementById("levelup").textContent="LEVEL "+level+"!";
-  setTimeout(()=>document.getElementById("levelup").style.display="none",1400);
-  previousLevel=level;
- }
-
- document.getElementById("leader").innerHTML=
-  "<b>PLAYERS</b><br>"+
-  players.map((p,i)=>({p,n:counts[i]}))
-  .sort((a,b)=>b.n-a.n)
-  .map(v=>"<span style='color:"+v.p.color+"'>● "+v.p.name+" "+
-   (v.n/TOTAL*100).toFixed(1)+"%</span>")
-  .join("<br>");
-
- const rewards=JSON.parse(
-  localStorage.getItem("hb18_rewards") ||
-  '{"coins":0,"captures":0,"completed":false}'
- );
-
- document.getElementById("leader").innerHTML +=
-  "<br><b style='color:#ffd700'>🪙 COINS: "+
-  rewards.coins+"</b>";
-  }
-
-// Draw flat, connected land with no visible cell outlines.
 function draw(){
- const me=players[0];
- const cols=Math.ceil(viewW/CELL)+2;
- const rows=Math.ceil(viewH/CELL)+2;
-
- const startX=Math.max(0,Math.min(WORLD-cols,me.x-Math.floor(cols/2)));
- const startY=Math.max(0,Math.min(WORLD-rows,me.y-Math.floor(rows/2)));
-
- ctx.fillStyle="#26364c";
- ctx.fillRect(0,0,viewW,viewH);
-
- for(let sy=0;sy<rows;sy++){
-  let lastOwner=EMPTY,runStart=0;
-  for(let sx=0;sx<=cols;sx++){
-   let owner=EMPTY;
-   if(sx<cols){
-    const x=startX+sx,y=startY+sy;
-    if(inside(x,y))owner=land[id(x,y)];
-   }
-   if(owner!==lastOwner){
-    if(lastOwner!==EMPTY){
-     ctx.fillStyle=colors[lastOwner];
-     ctx.fillRect(runStart*CELL,sy*CELL,(sx-runStart)*CELL,CELL+1);
-    }
-    lastOwner=owner;runStart=sx;
-   }
-  }
- }
-
- for(const p of players){
-  if(!p.trail.length)continue;
-  ctx.beginPath();
-  ctx.lineCap="round";
-  ctx.lineJoin="round";
-  ctx.lineWidth=CELL*0.72;
-  ctx.strokeStyle=p.color;
-
-  let started=false;
-  for(const cell of p.trail){
-   const x=cell%WORLD,y=Math.floor(cell/WORLD);
-   const sx=(x-startX)*CELL+CELL/2;
-   const sy=(y-startY)*CELL+CELL/2;
-   if(!started){ctx.moveTo(sx,sy);started=true;}
-   else ctx.lineTo(sx,sy);
-  }
-  if(started)ctx.stroke();
- }
-
- for(const p of players){
-  if(!p.alive)continue;
-  const sx=(p.x-startX)*CELL+CELL/2;
-  const sy=(p.y-startY)*CELL+CELL/2;
-  if(sx<0||sy<0||sx>viewW||sy>viewH)continue;
-
-  ctx.beginPath();
-  ctx.arc(sx,sy,9,0,Math.PI*2);
-  ctx.fillStyle="#ffffff";
-  ctx.fill();
-  ctx.lineWidth=4;
-  ctx.strokeStyle=p.color;
-  ctx.stroke();
-
-  ctx.font="bold 10px Arial";
-  ctx.textAlign="center";
-  ctx.fillStyle="white";
-  ctx.fillText(p.name,sx,sy-15);
- }
- drawMiniMap();
+ if(!started)return;let me=players[0],cols=Math.ceil(viewW/CELL)+2,rows=Math.ceil(viewH/CELL)+2;
+ let sx=Math.max(0,Math.min(N-cols,me.x-(cols/2|0))),sy=Math.max(0,Math.min(N-rows,me.y-(rows/2|0)));
+ ctx.fillStyle="#26364c";ctx.fillRect(0,0,viewW,viewH);
+ for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){let wx=sx+x,wy=sy+y;if(inside(wx,wy)){let owner=land[idx(wx,wy)];if(owner!==EMPTY){ctx.fillStyle=palette[owner];ctx.fillRect(x*CELL,y*CELL,CELL+0.5,CELL+0.5);}}}
+ for(const p of players)if(p.trail.length){ctx.beginPath();ctx.lineWidth=CELL*.68;ctx.lineCap="round";ctx.strokeStyle=palette[p.i];p.trail.forEach((c,k)=>{let x=(c%N-sx)*CELL+CELL/2,y=((c/N|0)-sy)*CELL+CELL/2;k?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();}
+ for(const p of players)if(p.alive){let x=(p.x-sx)*CELL+CELL/2,y=(p.y-sy)*CELL+CELL/2;if(x>-20&&y>-20&&x<viewW+20&&y<viewH+20){drawCar(p,x,y);ctx.fillStyle="#fff";ctx.font="bold 10px Arial";ctx.textAlign="center";ctx.fillText(names[p.i],x,y-17);}}
+ drawMini(); 
 }
-
-// Mini-map shows the whole arena and each player's position.
-function drawMiniMap(){
- const size=160;
- const scale=size/WORLD;
- const image=mctx.createImageData(size,size);
-
- for(let y=0;y<size;y++){
-  for(let x=0;x<size;x++){
-   const wx=Math.floor(x/scale);
-   const wy=Math.floor(y/scale);
-   const owner=land[id(wx,wy)];
-   const color=owner<0?[38,54,76]:hexToRgb(colors[owner]);
-   const k=(y*size+x)*4;
-   image.data[k]=color[0];
-   image.data[k+1]=color[1];
-   image.data[k+2]=color[2];
-   image.data[k+3]=255;
-  }
- }
- mctx.putImageData(image,0,0);
-
- for(const p of players){
-  if(!p.alive)continue;
-  mctx.beginPath();
-  mctx.arc(p.x*scale,p.y*scale,3.5,0,Math.PI*2);
-  mctx.fillStyle="#ffffff";
-  mctx.fill();
-  mctx.strokeStyle=p.color;
-  mctx.lineWidth=1.5;
-  mctx.stroke();
- }
-}
-
-function hexToRgb(hex){
- return [
-  parseInt(hex.slice(1,3),16),
-  parseInt(hex.slice(3,5),16),
-  parseInt(hex.slice(5,7),16)
- ];
-}
-
-function gameLoop(){
- if(gameOver)return;
- tick++;
- for(const p of players)move(p);
- updateStats();
- draw();
-}
-
-document.getElementById("restart").onclick=start;
-
-// The game waits here until START PLAYING is tapped.
+function drawMini(){let im=mctx.createImageData(160,160);for(let y=0;y<160;y++)for(let x=0;x<160;x++){let o=land[idx(Math.floor(x/1.6),Math.floor(y/1.6))],c=o<0?[38,54,76]:rgb(palette[o]),k=(y*160+x)*4;im.data[k]=c[0];im.data[k+1]=c[1];im.data[k+2]=c[2];im.data[k+3]=255;}mctx.putImageData(im,0,0);for(let p of players)if(p.alive){mctx.fillStyle="#fff";mctx.beginPath();mctx.arc(p.x*1.6,p.y*1.6,3,0,7);mctx.fill();}}
+function rgb(h){return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];}
+function update(){let count=land.reduce((a,v)=>a+(v===0),0),pct=count/TOTAL*100,level=1+Math.floor(pct/5);document.getElementById("score").textContent=pct.toFixed(1)+"%";document.getElementById("level").textContent=level;document.getElementById("coins").textContent=save.coins;document.getElementById("leader").innerHTML="<b>PLAYERS</b><br>"+players.map(p=>names[p.i]+(p.alive?" ●":" ✕")).join("<br>");}
+function toast(msg){let el=document.getElementById("toast");el.textContent=msg;el.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(()=>el.style.display="none",1300);}
+function step(){if(!started||gameOver)return;tick++;players.forEach(move);update();draw();}
+function openPanel(title,html){document.getElementById("panelTitle").textContent=title;document.getElementById("panelBody").innerHTML=html;document.getElementById("panel").style.display="flex";}
+function garage(){let html='<p style="text-align:center;color:#c7d5e8">Coins: 🪙 '+save.coins+'</p><div class="car-grid">';cars.forEach((c,i)=>{let owned=save.owned.includes(i),selected=save.selected===i;html+='<div class="car"><div class="emoji">'+c.emoji+'</div><b>'+c.name+'</b><small>'+(selected?"SELECTED":owned?"OWNED":c.price+" coins")+'</small><button data-car="'+i+'">'+(selected?"SELECTED":owned?"SELECT":"BUY")+'</button></div>';});html+='</div>';openPanel("🚗 CAR GARAGE",html);document.querySelectorAll("[data-car]").forEach(b=>b.onclick=()=>{let i=+b.dataset.car,c=cars[i];if(save.owned.includes(i)){save.selected=i;persist();garage();}else if(save.coins>=c.price){save.coins-=c.price;save.owned.push(i);save.selected=i;persist();garage();}else toast("Not enough coins yet!");});}
+function missions(){openPanel("🏆 MISSIONS",'<p>🎯 Claim territory to earn coins.</p><p>🗺️ Capture 3 areas: '+Math.min(save.captures,3)+'/3</p><p>🪙 Every successful capture gives coins based on land claimed.</p><p>Total coins: '+save.coins+'</p>');}
+document.getElementById("play").onclick=reset;document.getElementById("garageLobby").onclick=garage;document.getElementById("shopBtn").onclick=garage;document.getElementById("missions").onclick=missions;
+document.getElementById("help").onclick=()=>openPanel("HOW TO PLAY",'<p>1. Drag your finger across the arena to steer.</p><p>2. Leave your territory to draw a trail.</p><p>3. Return to your coloured land to capture the enclosed area.</p><p>4. Avoid crossing your own trail or the arena edge.</p><p>5. Earn coins and buy new cars in the garage.</p>');
+document.getElementById("closePanel").onclick=()=>document.getElementById("panel").style.display="none";
 </script>
 </body>
 </html>
-cols/2)));
- const startY=Math.max(0,Math.min(WORLD-rows,me.y-Math.floor(rows/2)));
-
- ctx.fillStyle="#26364c";
- ctx.fillRect(0,0,viewW,viewH);
-
- // Every owned cell touches the next one: no boxes or grid lines.
- for(let sy=0;sy<rows;sy++){
-  let lastOwner=EMPTY,runStart=0;
-  for(let sx=0;sx<=cols;sx++){
-   let owner=EMPTY;
-   if(sx<cols){
-    const x=startX+sx,y=startY+sy;
-    if(inside(x,y))owner=land[id(x,y)];
-   }
-   if(owner!==lastOwner){
-    if(lastOwner!==EMPTY){
-     ctx.fillStyle=colors[lastOwner];
-     ctx.fillRect(runStart*CELL,sy*CELL,(sx-runStart)*CELL,CELL+1);
-    }
-    lastOwner=owner;runStart=sx;
-   }
-  }
- }
-
- // Trails are drawn as smooth thick paths.
- for(const p of players){
-  if(!p.trail.length)continue;
-  ctx.beginPath();
-  ctx.lineCap="round";
-  ctx.lineJoin="round";
-  ctx.lineWidth=CELL*0.72;
-  ctx.strokeStyle=p.color;
-
-  let started=false;
-  for(const cell of p.trail){
-   const x=cell%WORLD,y=Math.floor(cell/WORLD);
-   const sx=(x-startX)*CELL+CELL/2;
-   const sy=(y-startY)*CELL+CELL/2;
-   if(!started){ctx.moveTo(sx,sy);started=true;}
-   else ctx.lineTo(sx,sy);
-  }
-  if(started)ctx.stroke();
- }
-
- // Player markers
- for(const p of players){
-  if(!p.alive)continue;
-  const sx=(p.x-startX)*CELL+CELL/2;
-  const sy=(p.y-startY)*CELL+CELL/2;
-  if(sx<0||sy<0||sx>viewW||sy>viewH)continue;
-
-  ctx.beginPath();
-  ctx.arc(sx,sy,9,0,Math.PI*2);
-  ctx.fillStyle="#ffffff";
-  ctx.fill();
-  ctx.lineWidth=4;
-  ctx.strokeStyle=p.color;
-  ctx.stroke();
-
-  ctx.font="bold 10px Arial";
-  ctx.textAlign="center";
-  ctx.fillStyle="white";
-  ctx.fillText(p.name,sx,sy-15);
- }
- drawMiniMap();
-}
-
-// Mini-map shows the whole arena and each player's position.
-function drawMiniMap(){
- const size=160;
- const scale=size/WORLD;
- const image=mctx.createImageData(size,size);
-
- for(let y=0;y<size;y++){
-  for(let x=0;x<size;x++){
-   const wx=Math.floor(x/scale);
-   const wy=Math.floor(y/scale);
-   const owner=land[id(wx,wy)];
-   const color=owner<0?[38,54,76]:hexToRgb(colors[owner]);
-   const k=(y*size+x)*4;
-   image.data[k]=color[0];
-   image.data[k+1]=color[1];
-   image.data[k+2]=color[2];
-   image.data[k+3]=255;
-  }
- }
- mctx.putImageData(image,0,0);
-
- for(const p of players){
-  if(!p.alive)continue;
-  mctx.beginPath();
-  mctx.arc(p.x*scale,p.y*scale,3.5,0,Math.PI*2);
-  mctx.fillStyle="#ffffff";
-  mctx.fill();
-  mctx.strokeStyle=p.color;
-  mctx.lineWidth=1.5;
-  mctx.stroke();
- }
-}
-
-function hexToRgb(hex){
- return [
-  parseInt(hex.slice(1,3),16),
-  parseInt(hex.slice(3,5),16),
-  parseInt(hex.slice(5,7),16)
- ];
-}
-
-function gameLoop(){
- if(gameOver)return;
- tick++;
- for(const p of players)move(p);
- updateStats();
- draw();
-}
-
-document.getElementById("restart").onclick=start;
-start();
-</script>
-</body>
-</html>L-4);
-   ctx.strokeStyle="white";
-   ctx.lineWidth=1;
-   ctx.strokeRect(sx+4,sy+4,CELL-8,CELL-8);
-  }
- }
-
- for(const p of players){
-  if(!p.alive)continue;
-  const sx=(p.x-startX)*CELL+CELL/2;
-  const sy=(p.y-startY)*CELL+CELL/2;
-  if(sx<0||sy<0||sx>viewW||sy>viewH)continue;
-
-  ctx.fillStyle="white";
-  ctx.beginPath();
-  ctx.arc(sx,sy,8,0,Math.PI*2);
-  ctx.fill();
-  ctx.strokeStyle=p.color;
-  ctx.lineWidth=4;
-  ctx.stroke();
-
-  ctx.fillStyle="white";
-  ctx.font="bold 10px Arial";
-  ctx.textAlign="center";
-  ctx.fillText(p.name,sx,sy-13);
- }
-}
-
-function gameLoop(){
- if(gameOver)return;
- tick++;
- for(const p of players)move(p);
- updateStats();
- draw();
-}
-
-document.getElementById("restart").onclick=start;
-start();
-</script>
-</body>
-</html>
-<script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/HB/sw.js", {
-    scope: "/HB/"
-  });
-}
-</script>
