@@ -479,7 +479,16 @@ function updateStats(){
   .map(v=>"<span style='color:"+v.p.color+"'>● "+v.p.name+" "+
    (v.n/TOTAL*100).toFixed(1)+"%</span>")
   .join("<br>");
-}
+
+ const rewards=JSON.parse(
+  localStorage.getItem("hb18_rewards") ||
+  '{"coins":0,"captures":0,"completed":false}'
+ );
+
+ document.getElementById("leader").innerHTML +=
+  "<br><b style='color:#ffd700'>🪙 COINS: "+
+  rewards.coins+"</b>";
+  }
 
 // Draw flat, connected land with no visible cell outlines.
 function draw(){
