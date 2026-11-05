@@ -3,138 +3,411 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#080d1b">
+<meta name="theme-color" content="#087de5">
 <title>HB LAND 18</title>
-<link rel="manifest" href="/HB/manifest.json">
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080d1b;color:#fff;font-family:Arial,sans-serif;touch-action:none}
-button{border:0;border-radius:12px;padding:12px 16px;font-weight:800;background:linear-gradient(135deg,#f5d77d,#b88628);color:#101827}
-#game{display:block;width:100vw;height:100dvh;background:#26364c}
-#hud{position:fixed;top:8px;left:8px;right:8px;display:flex;gap:7px;align-items:center;justify-content:space-between;pointer-events:none}
-.pill{background:#101c35eF;border:1px solid #c99b35;border-radius:10px;padding:7px 9px;font-size:12px}
-#mini{position:fixed;right:9px;top:58px;width:105px;height:105px;border:2px solid #e4bd58;border-radius:9px;background:#101c35}
-#leader{position:fixed;left:9px;top:58px;padding:8px;background:#101c35df;border-radius:9px;font-size:10px;line-height:16px;pointer-events:none}
-#hint{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:#101c35df;padding:9px 13px;border-radius:20px;font-size:11px;white-space:nowrap;pointer-events:none}
-#lobby,#panel{position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:18px;background:radial-gradient(ellipse at 50% 30%,#183a65,#0b1930 55%,#050b18)}
-.card{width:min(440px,100%);max-height:92dvh;overflow:auto;text-align:center;padding:24px 18px;border:2px solid #c99b35;border-radius:23px;background:linear-gradient(145deg,#142541,#080d1b);box-shadow:0 0 30px #c99b3544}
-.swan{font-size:60px}.brand{font-size:43px;letter-spacing:7px;color:#e9bd55;font-weight:1000;text-shadow:0 0 18px #d6a83b}
-h1{font-size:25px;margin:6px 0 8px} .sub{color:#d6ad50;letter-spacing:3px;font-size:11px;margin:12px 0 20px}
-.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
-.actions button,.wide{width:100%}
-.secondary{background:#1b2b48;color:#f3ca65;border:1px solid #80642c}
-#panel{display:none;background:#050b18eF;z-index:8}
-#panel .card{text-align:left}
-#panel h2{text-align:center;color:#f3ca65;margin-top:0}
-.car-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.car{background:#1b2b48;border:1px solid #52617a;border-radius:12px;padding:12px;text-align:center}
-.car .emoji{font-size:38px}.car small{display:block;color:#c5d1e2;margin:6px}
-#toast{position:fixed;top:45%;left:50%;transform:translate(-50%,-50%);z-index:10;background:#101c35;border:2px solid #e9bd55;border-radius:14px;padding:15px;display:none;text-align:center}
-@media(min-width:700px){#game{height:100dvh}}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#087de5;color:white;overflow:hidden;touch-action:none}
+button{border:3px solid #063c9d;border-radius:17px;background:linear-gradient(#fff,#bceeff);color:#07358d;font-weight:900;font-size:15px;padding:12px;box-shadow:0 4px 0 #07358d}
+button:active{transform:scale(.96)}
+#screen{position:absolute;inset:0;background:linear-gradient(145deg,#22d5f1,#0871db 65%,#1741c9);overflow:auto}
+#top{display:flex;justify-content:space-around;align-items:center;padding:12px 5px}
+.counter{background:#102e9d;border:2px solid #6be9ff;border-radius:25px;padding:9px 14px;font-weight:bold}
+#content{padding:12px;text-align:center}
+.logo{font-size:42px;font-weight:1000;color:#ffe64d;text-shadow:3px 4px #06358d}
+.subtitle{font-weight:900;letter-spacing:3px}
+.panel{background:linear-gradient(#21d8f6,#c9f7ff);border:5px solid white;border-radius:25px;padding:17px;color:#07358d;box-shadow:0 5px 0 #07358d;margin:12px auto;max-width:500px}
+.big{font-size:24px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{background:linear-gradient(#ffed55,#ffad20);border:3px solid white;border-radius:17px;padding:15px;color:#06358d;font-weight:900}
+.tile span{display:block;font-size:35px;margin:8px}
+#game{position:absolute;inset:0;background:#eafff6;display:none}
+#arena{width:100%;height:100%;display:block;touch-action:none}
+#gamehud{position:absolute;top:8px;left:8px;right:8px;pointer-events:none}
+#progress{height:27px;border:4px solid white;border-radius:30px;background:#102caa;overflow:hidden;box-shadow:0 2px 0 #06358d}
+#fill{height:100%;width:0;background:linear-gradient(90deg,#ff77d8,#ffe34e)}
+#percent{text-align:center;font-size:13px;font-weight:bold;margin-top:4px;text-shadow:1px 2px #07358d}
+#board{position:absolute;right:5px;top:65px;background:#102caa;border:2px solid white;border-radius:14px;padding:8px;font-size:12px;line-height:21px}
+#gamebuttons{position:absolute;bottom:10px;left:10px;right:10px;display:flex;justify-content:space-between}
+#gamebuttons button{font-size:12px;padding:9px}
+#overlay{position:absolute;inset:0;background:#00152acc;display:none;align-items:center;justify-content:center;padding:12px;z-index:10}
+#modal{width:100%;max-width:440px;max-height:90%;overflow:auto;background:linear-gradient(#0753df,#20c9ef,#d4faff);border:5px solid white;border-radius:28px;padding:18px;text-align:center;color:#07358d;box-shadow:0 5px #06358d}
+#modal h2{color:white;text-shadow:2px 3px #07358d}
+.option{background:#e5fbff;border:2px solid #0c4aab;border-radius:13px;padding:12px;margin:8px 0;font-weight:bold}
+.small{font-size:12px}
+#nav{position:fixed;bottom:0;left:0;right:0;background:#e4faff;border-top:4px solid #1645b5;display:flex;justify-content:space-around;padding:8px 2px;z-index:4}
+#nav button{font-size:11px;padding:9px 7px}
+#toast{position:absolute;top:42%;left:50%;transform:translate(-50%,-50%);background:#073baf;border:3px solid white;border-radius:20px;padding:16px;font-weight:900;display:none;z-index:20;text-align:center}
+.country{font-size:45px}
 </style>
 </head>
 <body>
-<canvas id="game"></canvas>
-<div id="hud" style="display:none">
- <div class="pill">LAND <b id="score">0%</b></div>
- <div class="pill">LEVEL <b id="level">1</b></div>
- <div class="pill">🪙 <b id="coins">0</b></div>
- <button id="shopBtn" style="pointer-events:auto;padding:9px 12px">GARAGE</button>
-</div>
-<canvas id="mini" width="160" height="160" style="display:none"></canvas>
-<div id="leader" style="display:none"></div>
-<div id="hint" style="display:none">Drag on the arena to steer your car</div>
 
-<div id="lobby">
- <div class="card">
-  <div class="swan">🦢</div><div class="brand">HB</div>
-  <h1>HB LAND 18</h1><div class="sub">DRIVE • CLAIM • CONQUER</div>
-  <div class="actions">
-   <button id="play">▶ PLAY</button><button class="secondary" id="garageLobby">🚗 GARAGE</button>
-   <button class="secondary" id="missions">🏆 MISSIONS</button><button class="secondary" id="help">❔ HOW TO PLAY</button>
+<div id="screen">
+ <div id="top">
+  <div class="counter">🪙 <span id="coins">0</span></div>
+  <div class="counter">💎 <span id="gems">0</span></div>
+  <button onclick="settings()">⚙️</button>
+ </div>
+ <div id="content">
+  <div class="logo">🦢 HB</div>
+  <h1>HB LAND 18</h1>
+  <div class="subtitle">CLAIM YOUR WORLD!</div>
+  <div class="panel">
+   <div style="font-size:65px">🏎️</div>
+   <h2>WELCOME PLAYER!</h2>
+   <button style="width:100%;font-size:23px" onclick="countries()">▶ PLAY</button>
+   <div class="grid" style="margin-top:12px">
+    <button onclick="garage()">🚗 GARAGE</button>
+    <button onclick="profile()">👤 PROFILE</button>
+    <button onclick="shop()">🛒 SHOP</button>
+    <button onclick="missions()">🏆 MISSIONS</button>
+   </div>
   </div>
-  <div style="color:#9fb4d0;font-size:11px;letter-spacing:2px">THE ADVENTURE BEGINS HERE</div>
+  <div class="panel">
+   <h2>YOUR PROGRESS</h2>
+   <div id="homeStats">Land: 0% | Level: 1</div>
+  </div>
  </div>
 </div>
 
-<div id="panel"><div class="card">
- <h2 id="panelTitle">🚗 CAR GARAGE</h2>
- <div id="panelBody"></div>
- <button class="wide" id="closePanel" style="margin-top:14px">BACK</button>
-</div></div>
+<div id="game">
+ <canvas id="arena"></canvas>
+ <div id="gamehud">
+  <div id="progress"><div id="fill"></div></div>
+  <div id="percent">0% CAPTURED</div>
+ </div>
+ <div id="board"></div>
+ <div id="gamebuttons">
+  <button onclick="settings()">⚙️</button>
+  <button onclick="garage()">🚗 CAR</button>
+  <button onclick="home()">⌂ HOME</button>
+ </div>
+</div>
+
+<div id="nav">
+ <button onclick="shop()">🛒<br>SHOP</button>
+ <button onclick="profile()">👤<br>PROFILE</button>
+ <button onclick="home()">🏠<br>HOME</button>
+ <button onclick="countries()">🌎<br>MAP</button>
+ <button onclick="settings()">⚙️<br>SETTINGS</button>
+</div>
+
+<div id="overlay">
+ <div id="modal">
+  <h2 id="modalTitle">HB LAND 18</h2>
+  <div id="modalBody"></div>
+  <button style="width:100%;margin-top:12px" onclick="closeModal()">✖ CLOSE</button>
+ </div>
+</div>
 <div id="toast"></div>
 
 <script>
-"use strict";
-const canvas=document.getElementById("game"),ctx=canvas.getContext("2d");
-const mini=document.getElementById("mini"),mctx=mini.getContext("2d");
-const N=100,CELL=24,TOTAL=N*N,EMPTY=-1;
-const palette=["#27c9a5","#ff5575","#ffca42","#638cff","#c277ff"];
-const names=["YOU","RED BOT","GOLD BOT","BLUE BOT","PURPLE BOT"];
+const $=id=>document.getElementById(id);
+let data=JSON.parse(localStorage.getItem("hb18deluxe")||"null")||{
+ coins:0,gems:0,car:0,owned:[0],name:"Player",kills:0,
+ countries:0,captures:0,best:0,level:1
+};
+function save(){localStorage.setItem("hb18deluxe",JSON.stringify(data));refresh();}
+function refresh(){
+ $("coins").textContent=data.coins;
+ $("gems").textContent=data.gems;
+ $("homeStats").textContent="Land: "+data.best.toFixed(1)+"% | Level: "+data.level;
+}
+refresh();
+
+function modal(title,html){
+ $("modalTitle").textContent=title;
+ $("modalBody").innerHTML=html;
+ $("overlay").style.display="flex";
+}
+function closeModal(){$("overlay").style.display="none";}
+function toast(s){
+ $("toast").textContent=s;$("toast").style.display="block";
+ setTimeout(()=>$("toast").style.display="none",1500);
+}
+function home(){
+ stopGame();
+ $("game").style.display="none";
+ $("screen").style.display="block";
+ $("nav").style.display="flex";
+ closeModal();
+}
+function countries(){
+ modal("🌎 CHOOSE A COUNTRY",`
+ <p>Choose a country to play!</p>
+ <div class="grid">
+ <div class="tile"><span>🇮🇳</span>INDIA<button onclick="startGame('India')">PLAY</button></div>
+ <div class="tile"><span>🇺🇸</span>USA<button onclick="startGame('USA')">PLAY</button></div>
+ <div class="tile"><span>🇧🇷</span>BRAZIL<button onclick="startGame('Brazil')">PLAY</button></div>
+ <div class="tile"><span>🇯🇵</span>JAPAN<button onclick="startGame('Japan')">PLAY</button></div>
+ </div>`);
+}
+function settings(){
+ modal("⚙️ SETTINGS",`
+ <div class="option">🔊 SOUND <button onclick="toggleSetting(this)">ON</button></div>
+ <div class="option">🎵 MUSIC <button onclick="toggleSetting(this)">ON</button></div>
+ <div class="option">📳 VIBRATION <button onclick="toggleSetting(this)">ON</button></div>
+ <div class="option">🗺️ MINIMAP <button onclick="toggleSetting(this)">ON</button></div>
+ <p class="small">HB LAND 18 • VERSION 2.0</p>`);
+}
+function toggleSetting(b){b.textContent=b.textContent==="ON"?"OFF":"ON";}
 const cars=[
- {name:"Blue Racer",emoji:"🏎️",price:0,color:"#36bfff"},
- {name:"Red Beast",emoji:"🚗",price:250,color:"#ff5268"},
- {name:"Golden King",emoji:"🏎️",price:600,color:"#f4c64e"},
- {name:"Shadow X",emoji:"🚙",price:1000,color:"#a6b2c5"},
- {name:"Emerald GT",emoji:"🚘",price:1500,color:"#42d69a"},
- {name:"Royal Swan",emoji:"🦢",price:2200,color:"#f3e5bd"}
+ ["🏎️","Blue Racer",0],
+ ["🚗","Red Racer",250],
+ ["🚙","Shadow Car",600],
+ ["🚕","Golden Taxi",1000],
+ ["🚘","Emerald GT",1500],
+ ["🦢","Royal Swan",2200]
 ];
-let save=JSON.parse(localStorage.getItem("hbl18_save")||"null")||{coins:0,owned:[0],selected:0,captures:0,level:1};
-function persist(){localStorage.setItem("hbl18_save",JSON.stringify(save));}
-let land=new Int8Array(TOTAL).fill(EMPTY),players=[],tick=0,loop=null,started=false,gameOver=false;
-let dir={x:1,y:0},finger=null,viewW=innerWidth,viewH=innerHeight;
-function resize(){let d=Math.min(devicePixelRatio||1,1.5);viewW=innerWidth;viewH=innerHeight;canvas.width=viewW*d;canvas.height=viewH*d;ctx.setTransform(d,0,0,d,0,0);}
-addEventListener("resize",resize);resize();
-const idx=(x,y)=>y*N+x,inside=(x,y)=>x>=0&&y>=0&&x<N&&y<N;
-function player(i,x,y,dx,dy){return{i,x,y,dx,dy,trail:[],alive:true,turnAt:0};}
-function home(p){for(let y=-3;y<=3;y++)for(let x=-3;x<=3;x++)if(inside(p.x+x,p.y+y))land[idx(p.x+x,p.y+y)]=p.i;}
-function reset(){
- clearInterval(loop);land.fill(EMPTY);players=[player(0,50,50,1,0),player(1,18,18,1,0),player(2,82,18,-1,0),player(3,18,82,1,0),player(4,82,82,-1,0)];
- players.forEach(home);dir={x:1,y:0};tick=0;gameOver=false;started=true;
- document.getElementById("lobby").style.display="none";document.getElementById("hud").style.display="flex";mini.style.display="block";document.getElementById("leader").style.display="block";document.getElementById("hint").style.display="block";
- update();draw();loop=setInterval(step,115);
+function garage(){
+ let html='<p>Coins: 🪙 '+data.coins+'</p><div class="grid">';
+ cars.forEach((c,i)=>{
+ let owned=data.owned.includes(i);
+ html+=`<div class="tile"><span>${c[0]}</span>${c[1]}<p>${owned?"OWNED":c[2]+" coins"}</p><button onclick="chooseCar(${i})">${data.car===i?"SELECTED":owned?"SELECT":"BUY"}</button></div>`;
+ });
+ html+='</div>';modal("🚗 CAR GARAGE",html);
 }
-function steer(x,y){if(x===-dir.x&&y===-dir.y)return;dir={x,y};players[0].dx=x;players[0].dy=y;}
-canvas.addEventListener("pointerdown",e=>{if(!started)return;finger={x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);});
-canvas.addEventListener("pointermove",e=>{if(!finger||!started)return;let dx=e.clientX-finger.x,dy=e.clientY-finger.y;if(Math.max(Math.abs(dx),Math.abs(dy))>13){if(Math.abs(dx)>Math.abs(dy))steer(dx>0?1:-1,0);else steer(0,dy>0?1:-1);finger={x:e.clientX,y:e.clientY};}});
-canvas.addEventListener("pointerup",()=>finger=null);canvas.addEventListener("pointercancel",()=>finger=null);
+function chooseCar(i){
+ if(data.owned.includes(i)){data.car=i;save();garage();return;}
+ if(data.coins>=cars[i][2]){
+ data.coins-=cars[i][2];data.owned.push(i);data.car=i;save();garage();
+ }else toast("Not enough coins!");
+}
+function shop(){
+ modal("🛒 HB SHOP",`
+ <p>🪙 COINS: ${data.coins} &nbsp; 💎 GEMS: ${data.gems}</p>
+ <div class="grid">
+ <div class="tile"><span>🪙</span>500 COINS<br><small>Free reward</small><button onclick="reward(500)">CLAIM</button></div>
+ <div class="tile"><span>🪙</span>1500 COINS<br><small>Free reward</small><button onclick="reward(1500)">CLAIM</button></div>
+ <div class="tile"><span>💎</span>5 GEMS<br><small>Game reward</small><button onclick="rewardGems()">CLAIM</button></div>
+ </div>
+ <p class="small">These are in-game rewards. No real-money purchases.</p>`);
+}
+function reward(n){
+ if(sessionStorage.getItem("hbReward"+n)){toast("Reward already claimed!");return;}
+ sessionStorage.setItem("hbReward"+n,"yes");data.coins+=n;save();shop();
+}
+function rewardGems(){
+ if(sessionStorage.getItem("hbGems")){toast("Already claimed!");return;}
+ sessionStorage.setItem("hbGems","yes");data.gems+=5;save();shop();
+}
+function profile(){
+ modal("👤 PLAYER PROFILE",`
+ <div class="panel">
+ <div style="font-size:50px">🐼</div>
+ <h2>${data.name}</h2>
+ <button onclick="rename()">✏️ CHANGE NAME</button>
+ </div>
+ <div class="grid">
+ <div class="tile">🏅 LEAGUE<br>BRONZE I</div>
+ <div class="tile">💀 KILLS<br>${data.kills}</div>
+ <div class="tile">🌎 COUNTRIES<br>${data.countries}</div>
+ <div class="tile">🏆 BEST LAND<br>${data.best.toFixed(1)}%</div>
+ </div>`);
+}
+function rename(){
+ let n=prompt("Enter player name:",data.name);
+ if(n&&n.trim()){data.name=n.trim().slice(0,18);save();profile();}
+}
+function missions(){
+ modal("🏆 MISSIONS",`
+ <div class="option">🎯 Capture 5% land<br>Reward: 100 coins</div>
+ <div class="option">🚗 Play one round<br>Reward: 50 coins</div>
+ <div class="option">🌎 Explore countries<br>Reward: 100 coins</div>
+ <p>Capture land to earn coins!</p>`);
+}
+
+/* GAME ENGINE */
+const canvas=$("arena"),ctx=canvas.getContext("2d");
+const SIZE=100;
+let map=[],bots=[],me={},trail=[],running=false,timer=null;
+let cell=20,camX=0,camY=0,dir={x:1,y:0},pointer=null,countryName="India";
+const colors=["#ffce24","#25c8e7","#f17bc9","#23b879","#a37cf1"];
+function index(x,y){return y*SIZE+x;}
+function inside(x,y){return x>=0&&y>=0&&x<SIZE&&y<SIZE;}
+function paintHome(p){
+ for(let y=-3;y<=3;y++)for(let x=-3;x<=3;x++){
+ if(inside(p.x+x,p.y+y))map[index(p.x+x,p.y+y)]=p.id;
+ }
+}
+function startGame(country){
+ countryName=country;closeModal();
+ $("screen").style.display="none";$("nav").style.display="none";
+ $("game").style.display="block";
+ resizeGame();
+ map=new Array(SIZE*SIZE).fill(-1);
+ me={id:0,x:50,y:50,dx:1,dy:0,trail:[],alive:true};
+ bots=[
+ {id:1,x:17,y:17,dx:1,dy:0,trail:[],alive:true},
+ {id:2,x:82,y:18,dx:-1,dy:0,trail:[],alive:true},
+ {id:3,x:18,y:82,dx:1,dy:0,trail:[],alive:true},
+ {id:4,x:82,y:82,dx:-1,dy:0,trail:[],alive:true}
+ ];
+ paintHome(me);bots.forEach(paintHome);
+ dir={x:1,y:0};trail=me.trail;
+ running=true;clearInterval(timer);timer=setInterval(updateGame,115);
+ drawGame();
+}
+function stopGame(){running=false;clearInterval(timer);}
+function resizeGame(){
+ let d=Math.min(devicePixelRatio||1,2);
+ canvas.width=innerWidth*d;canvas.height=innerHeight*d;
+ canvas.style.width=innerWidth+"px";canvas.style.height=innerHeight+"px";
+ ctx.setTransform(d,0,0,d,0,0);
+}
+addEventListener("resize",()=>{if(running)resizeGame();});
+function steer(x,y){
+ if(x===-dir.x&&y===-dir.y)return;
+ dir={x,y};me.dx=x;me.dy=y;
+}
+canvas.addEventListener("pointerdown",e=>{
+ if(!running)return;pointer={x:e.clientX,y:e.clientY};
+ canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener("pointermove",e=>{
+ if(!pointer||!running)return;
+ let dx=e.clientX-pointer.x,dy=e.clientY-pointer.y;
+ if(Math.max(Math.abs(dx),Math.abs(dy))>12){
+ if(Math.abs(dx)>Math.abs(dy))steer(dx>0?1:-1,0);
+ else steer(0,dy>0?1:-1);
+ pointer={x:e.clientX,y:e.clientY};
+ }
+});
+canvas.addEventListener("pointerup",()=>pointer=null);
+canvas.addEventListener("pointercancel",()=>pointer=null);
+
 function capture(p){
- const blocked=new Uint8Array(TOTAL),outside=new Uint8Array(TOTAL),q=new Int32Array(TOTAL);let h=0,t=0;
- for(let i=0;i<TOTAL;i++)blocked[i]=land[i]===p.i?1:0;
- for(const c of p.trail)blocked[c]=1;
- function add(i){if(!blocked[i]&&!outside[i]){outside[i]=1;q[t++]=i;}}
- for(let x=0;x<N;x++){add(idx(x,0));add(idx(x,N-1));}
- for(let y=0;y<N;y++){add(idx(0,y));add(idx(N-1,y));}
- while(h<t){let i=q[h++],x=i%N,y=(i/N)|0;if(x)add(i-1);if(x<N-1)add(i+1);if(y)add(i-N);if(y<N-1)add(i+N);}
- let gained=0;for(let i=0;i<TOTAL;i++)if(!outside[i]&&land[i]!==p.i){land[i]=p.i;gained++;}
- p.trail=[];if(p.i===0&&gained>0){let reward=Math.max(5,Math.floor(gained/12));save.coins+=reward;save.captures++;persist();toast("+"+reward+" COINS! TERRITORY CLAIMED");}
+ let outside=new Uint8Array(SIZE*SIZE),queue=[];
+ let blocked=new Uint8Array(SIZE*SIZE);
+ for(let i=0;i<map.length;i++)if(map[i]===p.id)blocked[i]=1;
+ p.trail.forEach(i=>blocked[i]=1);
+ function add(i){
+ if(!blocked[i]&&!outside[i]){outside[i]=1;queue.push(i);}
+ }
+ for(let x=0;x<SIZE;x++){add(index(x,0));add(index(x,SIZE-1));}
+ for(let y=0;y<SIZE;y++){add(index(0,y));add(index(SIZE-1,y));}
+ for(let q=0;q<queue.length;q++){
+ let i=queue[q],x=i%SIZE,y=Math.floor(i/SIZE);
+ if(x>0)add(i-1);if(x<SIZE-1)add(i+1);
+ if(y>0)add(i-SIZE);if(y<SIZE-1)add(i+SIZE);
+ }
+ let gained=0;
+ for(let i=0;i<map.length;i++){
+ if(!outside[i]&&map[i]!==p.id){map[i]=p.id;gained++;}
+ }
+ p.trail=[];
+ if(p.id===0&&gained){
+ let reward=Math.max(5,Math.floor(gained/10));
+ data.coins+=reward;data.captures++;
+ toast("+"+reward+" COINS!");
+ save();
+ }
 }
-function eliminate(p){p.alive=false;p.trail=[];for(let i=0;i<TOTAL;i++)if(land[i]===p.i)land[i]=EMPTY;setTimeout(()=>{if(!started)return;p.x=10+Math.random()*80|0;p.y=10+Math.random()*80|0;p.dx=1;p.dy=0;p.alive=true;home(p);if(p.i===0){dir={x:1,y:0};toast("Car respawned!");}draw();},900);}
-function botTurn(p){if(tick<p.turnAt)return;let opts=[{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}].filter(d=>!(d.x===-p.dx&&d.y===-p.dy)&&inside(p.x+d.x,p.y+d.y));if(opts.length){let safe=opts.filter(d=>land[idx(p.x+d.x,p.y+d.y)]!==p.i);let d=(safe.length?safe:opts)[Math.random()*(safe.length||opts.length)|0];p.dx=d.x;p.dy=d.y;}p.turnAt=tick+5+(Math.random()*10|0);}
+function botMove(p){
+ if(Math.random()<.12){
+ let ds=[[1,0],[-1,0],[0,1],[0,-1]].filter(d=>!(d[0]===-p.dx&&d[1]===-p.dy));
+ let d=ds[Math.floor(Math.random()*ds.length)];p.dx=d[0];p.dy=d[1];
+ }
+}
 function move(p){
- if(!p.alive)return;if(p.i)botTurn(p);
- let x=p.x+p.dx,y=p.y+p.dy;if(!inside(x,y)){p.dx=-p.dx;p.dy=-p.dy;return;}
- let n=idx(x,y);if(p.trail.includes(n)){eliminate(p);return;}
- for(const e of players)if(e!==p&&e.alive&&e.trail.includes(n))eliminate(e);
+ if(!p.alive)return;
+ if(p.id!==0)botMove(p);
+ let x=p.x+p.dx,y=p.y+p.dy;
+ if(!inside(x,y)){p.dx=-p.dx;p.dy=-p.dy;return;}
+ let i=index(x,y);
+ if(p.trail.includes(i)){
+ if(p.id===0){p.trail=[];toast("Trail lost!");}
+ else p.trail=[];
+ return;
+ }
  p.x=x;p.y=y;
- if(land[n]===p.i){if(p.trail.length)capture(p);}else p.trail.push(n);
- for(const e of players)if(e!==p&&e.alive&&e.trail.includes(n))eliminate(e);
+ if(map[i]===p.id){
+ if(p.trail.length)capture(p);
+ }else p.trail.push(i);
 }
-function drawCar(p,cx,cy){
- ctx.save();ctx.translate(cx,cy);let angle=p.dx===1?0:p.dx===-1?Math.PI:p.dy===1?Math.PI/2:-Math.PI/2;ctx.rotate(angle);
- ctx.shadowColor="#000";ctx.shadowBlur=7;
- ctx.fillStyle="#111827";ctx.fillRect(-10,-8,20,16);
- ctx.fillStyle=p.i===0?cars[save.selected].color:palette[p.i];ctx.beginPath();ctx.roundRect(-9,-7,18,14,5);ctx.fill();
- ctx.fillStyle="#d9f2ff";ctx.fillRect(-3,-5,7,10);
- ctx.fillStyle="#fff5c2";ctx.fillRect(7,-5,2,3);ctx.fillRect(7,2,2,3);
+function updateGame(){
+ if(!running)return;
+ move(me);bots.forEach(move);
+ let count=map.filter(v=>v===0).length;
+ let pct=count/(SIZE*SIZE)*100;
+ $("fill").style.width=pct+"%";
+ $("percent").textContent=pct.toFixed(1)+"% CAPTURED";
+ data.best=Math.max(data.best,pct);
+ data.level=1+Math.floor(data.best/5);
+ $("board").innerHTML="<b>🏆 LEADERBOARD</b><br>1 YOU "+pct.toFixed(1)+"%<br>2 RED "+area(1)+"%<br>3 BLUE "+area(2)+"%<br>4 GREEN "+area(3)+"%";
+ save();drawGame();
+}
+function area(id){
+ return (map.filter(v=>v===id).length/100).toFixed(1);
+}
+function drawGame(){
+ if(!running)return;
+ let w=innerWidth,h=innerHeight;
+ cell=Math.max(8,Math.min(20,w/18));
+ camX=Math.max(0,Math.min(SIZE-Math.ceil(w/cell),me.x-Math.floor(w/cell/2)));
+ camY=Math.max(0,Math.min(SIZE-Math.ceil(h/cell),me.y-Math.floor(h/cell/2)));
+ ctx.fillStyle="#eafff6";ctx.fillRect(0,0,w,h);
+ for(let y=0;y<Math.ceil(h/cell)+1;y++){
+ for(let x=0;x<Math.ceil(w/cell)+1;x++){
+ let wx=camX+x,wy=camY+y;if(!inside(wx,wy))continue;
+ let owner=map[index(wx,wy)];
+ if(owner>=0){ctx.fillStyle=colors[owner];ctx.fillRect(x*cell,y*cell,cell+.5,cell+.5);}
+ }
+ }
+ playersDraw(me);bots.forEach(playersDraw);
+}
+function playersDraw(p){
+ if(p.trail.length){
+ ctx.beginPath();ctx.lineCap="round";ctx.lineJoin="round";
+ ctx.lineWidth=cell*.95;ctx.strokeStyle=colors[p.id];
+ p.trail.forEach((i,k)=>{
+ let x=(i%SIZE-camX)*cell+cell/2;
+ let y=(Math.floor(i/SIZE)-camY)*cell+cell/2;
+ if(k===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+ });
+ ctx.stroke();
+ }
+ let x=(p.x-camX)*cell+cell/2,y=(p.y-camY)*cell+cell/2;
+ ctx.save();ctx.translate(x,y);ctx.rotate(p.dx===1?0:p.dx===-1?Math.PI:p.dy===1?Math.PI/2:-Math.PI/2);
+ ctx.fillStyle="#172c68";ctx.fillRect(-cell*.65,-cell*.48,cell*1.3,cell*.96);
+ ctx.fillStyle=p.id===0?cars[data.car][0]==="🦢"?"#fff0a3":"#ffcf28":colors[p.id];
+ ctx.beginPath();ctx.roundRect(-cell*.58,-cell*.4,cell*1.16,cell*.8,cell*.2);ctx.fill();
+ ctx.fillStyle="#b9f4ff";ctx.fillRect(-cell*.1,-cell*.3,cell*.4,cell*.6);
  ctx.restore();
 }
-function draw(){
- if(!started)return;let me=players[0],cols=Math.ceil(viewW/CELL)+2,rows=Math.ceil(viewH/CELL)+2;
- let sx=Math.max(0,Math.min(N-cols,me.x-(cols/2|0))),sy=Math.max(0,Math.min(N-rows,me.y-(rows/2|0)));
- ctx.fillStyle="#26364c";ctx.fillRect(0,0,viewW,viewH);
- for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){let wx=sx+x,wy=sy+y;if(inside(wx,wy)){let owner=land[idx(wx,wy)];if(owner!==EMPTY){ctx.fillStyle=palette[owner];ctx.fillRect(x*CELL,y*CELL,CELL+0.5,CELL+0.5);}}}
- for(const p of players)if(p.trail.length){ctx.beginPath();ctx.lineWidth=CELL*.68;ctx.lineCap="round";ctx.strokeStyle=palette[p.i];p.trail.forEach((c,k)=>{let x=(c%N-sx)*CELL+CELL/2,y=((c/N|0)-sy)*CELL+CELL/2;k?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();}
- for(const p of players)if(p.alive){let x=(p.x-sx)*CELL+CELL/2,y=(p.y-sy)*CELL+CELL/2;if(x>-20&&y>-20&&x<viewW+20&&y<viewH+20){drawCar(p,x,y);ctx.fillStyle="#fff";ctx.font="bold 10px Arial";ctx.textAlign="center";ctx.fillText(names[p.i],x,y-17);}}
+function drawGame(){}
+
+/* Repaint function */
+function renderGame(){
+ if(!running)return;
+ let w=innerWidth,h=innerHeight;
+ ctx.fillStyle="#eafff6";ctx.fillRect(0,0,w,h);
+ let size=cell;
+ for(let y=0;y<h/size+1;y++)for(let x=0;x<w/size+1;x++){
+ let wx=camX+x,wy=camY+y;if(!inside(wx,wy))continue;
+ let owner=map[index(wx,wy)];
+ if(owner>=0){ctx.fillStyle=colors[owner];ctx.fillRect(x*size,y*size,size+.5,size+.5);}
+ }
+ [me,...bots].forEach(p=>{
+ if(p.trail.length){
+ ctx.beginPath();ctx.lineCap="round";ctx.lineJoin="round";
+ ctx.lineWidth=size*.95;ctx.strokeStyle=colors[p.id];
+ p.trail.forEach((i,k)=>{
+ let x=(i%SIZE-camX)*size+size/2,y=(Math.floor(i/SIZE)-camY)*size+size/2;
+ if(k===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+ });ctx.stroke();
+ }
+ let x=(p.x-camX)*size+size/2,y=(p.y-camY)*size+size/2;
+ ctx.fillStyle=p.id===0?"#ffcf28":colors[p.id];
+ ctx.beginPath();ctx.roundRect(x-size*.55,y-size*.4,size*1.1,size*.8,7);ctx.fill();
+ ctx.strokeStyle="#07358d";ctx.lineWidth=2;ctx.stroke();
+ });
+}
+function toast(s){$("toast").textContent=s;$("toast").style.display="block";setTimeout(()=>$("toast").style.display="none",1300);}
+</script>
+</body>
+</html>ff";ctx.font="bold 10px Arial";ctx.textAlign="center";ctx.fillText(names[p.i],x,y-17);}}
  drawMini(); 
 }
 function drawMini(){let im=mctx.createImageData(160,160);for(let y=0;y<160;y++)for(let x=0;x<160;x++){let o=land[idx(Math.floor(x/1.6),Math.floor(y/1.6))],c=o<0?[38,54,76]:rgb(palette[o]),k=(y*160+x)*4;im.data[k]=c[0];im.data[k+1]=c[1];im.data[k+2]=c[2];im.data[k+3]=255;}mctx.putImageData(im,0,0);for(let p of players)if(p.alive){mctx.fillStyle="#fff";mctx.beginPath();mctx.arc(p.x*1.6,p.y*1.6,3,0,7);mctx.fill();}}
