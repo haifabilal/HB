@@ -8,7 +8,7 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#071c38;color:white;font-family:Arial;overflow:hidden;touch-action:none}
-canvas#game{width:100vw;height:100dvh;display:block}
+#game{width:100vw;height:100dvh;display:block}
 #hud{position:fixed;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;gap:5px;pointer-events:none}
 .panel{background:#07172ddd;border:1px solid #ffffff44;border-radius:12px;padding:9px;font-size:13px}
 #mini{position:fixed;right:10px;top:65px;width:110px;height:110px;border:2px solid white;border-radius:10px;background:#07172d}
@@ -103,8 +103,7 @@ function startGame(){
  }
  for(let p of players){
   for(let x=-3;x<=3;x++)for(let y=-3;y<=3;y++){
-   let px=p.x+x*cell,py=p.y+y*cell;
-   paint(px,py,p.id);
+   paint(p.x+x*cell,p.y+y*cell,p.id);
   }
  }
  document.getElementById("lobby").style.display="none";
@@ -129,9 +128,9 @@ function finish(win,reason){
 }
 function toast(s){document.getElementById("help").textContent=s}
 
-/* Transfer every captured cell from eliminated player to the winner. */
+/* Eliminated player's complete territory goes to the player who eliminated them. */
 function eliminate(victim,killer){
- if(!victim.alive)return;
+ if(!victim.alive||!killer||!killer.alive)return;
  victim.alive=false;
  victim.trail=[];
  for(let [k,v] of land){
@@ -139,10 +138,11 @@ function eliminate(victim,killer){
  }
  if(killer.id===0){
   kills++;coins+=20;
-  toast("Rival eliminated! +20 coins and all their land!");
+  toast("You gained all their land! +20 coins");
  }
  if(victim.id===0){
-  finish(false,"Your trail was touched! You lost your land.");
+  finish(false,"You touched a rival's trail or a rival touched your trail!");
+  return;
  }
  const alive=players.filter(p=>p.alive);
  if(alive.length===1&&alive[0].id===0){
@@ -151,20 +151,40 @@ function eliminate(victim,killer){
  }
 }
 
-/* A player who touches another player's trail eliminates its owner. */
+/*
+CORRECT COLLISION RULES:
+1. You touch a bot's trail: YOU die; bot gets your land.
+2. Bot touches your trail: BOT dies; you get its land.
+3. Your trail touches bot's car: BOT dies; you get its land.
+4. Bot's trail touches your car: YOU die; bot gets your land.
+*/
 function combat(){
  const alive=players.filter(p=>p.alive);
+
  for(let toucher of alive){
+  if(!toucher.alive)continue;
+
   for(let owner of alive){
-   if(toucher===owner||!owner.trail.length)continue;
+   if(!owner.alive||toucher===owner)continue;
+
+   // A car touches another player's exposed trail.
+   // The car that touched the trail dies.
    if(touchesTrail(toucher,owner.trail)){
-    eliminate(owner,toucher);
+    eliminate(toucher,owner);
     if(!running)return;
     break;
+   }
+
+   // A player's exposed trail touches another player's car.
+   // The car that was touched dies.
+   if(touchesTrail(owner,toucher.trail)){
+    eliminate(toucher,owner);
+    if(!running)return;
    }
   }
  }
 }
+
 function touchesTrail(player,trail){
  for(let pt of trail){
   if(Math.hypot(player.x-pt.x,player.y-pt.y)<19)return true;
@@ -239,7 +259,6 @@ function draw(){
  ctx.fillStyle="#0876b9";ctx.fillRect(0,0,W,H);
  ctx.save();ctx.translate(-camera.x,-camera.y);
 
- // Island outline
  ctx.beginPath();
  for(let a=0;a<=Math.PI*2+.01;a+=.02){
   let wobble=1+.025*Math.sin(a*7)+.018*Math.cos(a*11);
@@ -250,16 +269,14 @@ function draw(){
  ctx.closePath();ctx.fillStyle="#d2c47a";ctx.fill();
  ctx.strokeStyle="#fff0a8";ctx.lineWidth=22;ctx.stroke();
 
- // Land
  for(let [k,id] of land){
   let [gx,gy]=k.split(",").map(Number);
-  ctx.fillStyle=colors[id];
-  ctx.globalAlpha=.86;
+  ctx.fillStyle=colors[id];ctx.globalAlpha=.86;
   ctx.fillRect(gx*cell,gy*cell,cell+1,cell+1);
  }
  ctx.globalAlpha=1;
 
- // Thick visible trails
+ // Bright, thick exposed trails
  for(let p of players){
   if(!p.alive||!p.trail.length)continue;
   ctx.beginPath();
@@ -267,11 +284,10 @@ function draw(){
   for(let pt of p.trail)ctx.lineTo(pt.x,pt.y);
   ctx.lineTo(p.x,p.y);
   ctx.lineCap="round";ctx.lineJoin="round";
-  ctx.strokeStyle="#ffffff";ctx.lineWidth=23;ctx.stroke();
+  ctx.strokeStyle="white";ctx.lineWidth=23;ctx.stroke();
   ctx.strokeStyle=colors[p.id];ctx.lineWidth=14;ctx.stroke();
  }
 
- // Cars and names
  for(let p of players){
   if(!p.alive)continue;
   ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle);
@@ -312,6 +328,14 @@ canvas.addEventListener("pointerdown",e=>{
  canvas.setPointerCapture(e.pointerId);
 });
 canvas.addEventListener("pointermove",e=>{
+ if(pointer)pointer={x:e.clientX,y:e.clientY};
+});
+canvas.addEventListener("pointerup",()=>pointer=null);
+canvas.addEventListener("pointercancel",()=>pointer=null);
+</script>
+</body>
+</html>
+r("pointermove",e=>{
  if(pointer)pointer={x:e.clientX,y:e.clientY};
 });
 canvas.addEventListener("pointerup",()=>pointer=null);
