@@ -15,7 +15,8 @@ body{margin:0;background:#071c38;color:white;font-family:Arial;overflow:hidden;t
 #help{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:#07172ddd;padding:9px 14px;border-radius:20px;font-size:12px;white-space:nowrap}
 #lobby,#message{position:fixed;inset:0;background:radial-gradient(circle,#164b70,#06152d 75%);display:flex;align-items:center;justify-content:center;text-align:center;padding:20px}
 #lobbyBox,#messageBox{width:min(420px,100%);background:#0c2341;border:1px solid #5be7d2;border-radius:25px;padding:25px;box-shadow:0 0 35px #00cdbb44}
-.logo{font-size:65px}h1{font-size:35px;margin:8px;color:#5be7d2}
+.logo{font-size:65px}
+h1{font-size:35px;margin:8px;color:#5be7d2}
 button{border:0;border-radius:14px;padding:14px 25px;background:#50e6c0;color:#062339;font-size:18px;font-weight:bold;margin:8px}
 #message{display:none;background:#00152dcc}
 </style>
@@ -28,6 +29,7 @@ button{border:0;border-radius:14px;padding:14px 25px;background:#50e6c0;color:#0
  <div class="panel">🪙 <span id="coins">0</span><br>🏆 <span id="kills">0</span> kills</div>
  <div class="panel">LEVEL <span id="level">1</span></div>
 </div>
+
 <canvas id="mini" width="110" height="110" style="display:none"></canvas>
 <div id="help" style="display:none">👆 Drag to steer your car</div>
 
@@ -75,50 +77,72 @@ function resize(){
 }
 addEventListener("resize",resize);resize();
 
-function key(x,y){return Math.floor(x/cell)+","+Math.floor(y/cell)}
+function key(x,y){
+ return Math.floor(x/cell)+","+Math.floor(y/cell);
+}
 function owned(x,y,id){return land.get(key(x,y))===id}
 function paint(x,y,id){land.set(key(x,y),id)}
+
 function inside(x,y){
  let nx=(x-world/2)/(world*.47);
  let ny=(y-world/2)/(world*.43);
  return nx*nx+ny*ny<1;
 }
+
 function randomPosition(){
  for(let i=0;i<500;i++){
   let x=200+Math.random()*(world-400);
   let y=200+Math.random()*(world-400);
-  if(inside(x,y)&&players.every(p=>Math.hypot(p.x-x,p.y-y)>250))return{x,y};
+  if(inside(x,y)&&players.every(p=>Math.hypot(p.x-x,p.y-y)>250)){
+   return{x,y};
+  }
  }
  return{x:world/2,y:world/2};
 }
+
 function makePlayer(id,x,y){
- return {id,name:names[id],x,y,angle:Math.random()*6.28,
- speed:id===0?180:125,trail:[],alive:true,ai:0};
+ return {
+  id,name:names[id],x,y,
+  angle:Math.random()*6.28,
+  speed:id===0?180:125,
+  trail:[],alive:true,ai:0
+ };
 }
+
 function startGame(){
  land.clear();players=[];coins=0;kills=0;level=1;
  players.push(makePlayer(0,world/2,world/2));
+
  for(let i=1;i<8;i++){
-  let p=randomPosition();players.push(makePlayer(i,p.x,p.y));
+  let p=randomPosition();
+  players.push(makePlayer(i,p.x,p.y));
  }
+
  for(let p of players){
-  for(let x=-3;x<=3;x++)for(let y=-3;y<=3;y++){
-   paint(p.x+x*cell,p.y+y*cell,p.id);
+  for(let x=-3;x<=3;x++){
+   for(let y=-3;y<=3;y++){
+    paint(p.x+x*cell,p.y+y*cell,p.id);
+   }
   }
  }
+
  document.getElementById("lobby").style.display="none";
  document.getElementById("message").style.display="none";
  document.getElementById("hud").style.display="flex";
  document.getElementById("mini").style.display="block";
  document.getElementById("help").style.display="block";
- running=true;last=performance.now();
+
+ running=true;
+ last=performance.now();
  requestAnimationFrame(loop);
 }
+
 function goLobby(){
  running=false;
  document.getElementById("message").style.display="none";
  document.getElementById("lobby").style.display="flex";
 }
+
 function finish(win,reason){
  if(!running)return;
  running=false;
@@ -126,24 +150,35 @@ function finish(win,reason){
  document.getElementById("resultText").textContent=reason;
  document.getElementById("message").style.display="flex";
 }
-function toast(s){document.getElementById("help").textContent=s}
 
-/* Eliminated player's complete territory goes to the player who eliminated them. */
+function toast(s){
+ document.getElementById("help").textContent=s;
+}
+
+/* Transfer all the defeated player's land to the survivor. */
 function eliminate(victim,killer){
  if(!victim.alive||!killer||!killer.alive)return;
+
  victim.alive=false;
  victim.trail=[];
+
  for(let [k,v] of land){
-  if(v===victim.id)land.set(k,killer.id);
+  if(v===victim.id){
+   land.set(k,killer.id);
+  }
  }
+
  if(killer.id===0){
-  kills++;coins+=20;
+  kills++;
+  coins+=20;
   toast("You gained all their land! +20 coins");
  }
+
  if(victim.id===0){
-  finish(false,"You touched a rival's trail or a rival touched your trail!");
+  finish(false,"A rival touched your exposed trail!");
   return;
  }
+
  const alive=players.filter(p=>p.alive);
  if(alive.length===1&&alive[0].id===0){
   coins+=500;
@@ -152,33 +187,31 @@ function eliminate(victim,killer){
 }
 
 /*
-CORRECT COLLISION RULES:
-1. You touch a bot's trail: YOU die; bot gets your land.
-2. Bot touches your trail: BOT dies; you get its land.
-3. Your trail touches bot's car: BOT dies; you get its land.
-4. Bot's trail touches your car: YOU die; bot gets your land.
+COLLISION RULE:
+The player whose car touches a trail dies.
+The owner of that trail survives and receives the defeated player's land.
 */
 function combat(){
  const alive=players.filter(p=>p.alive);
 
- for(let toucher of alive){
-  if(!toucher.alive)continue;
+ // Check each pair of players only once.
+ for(let i=0;i<alive.length;i++){
+  for(let j=i+1;j<alive.length;j++){
+   const a=alive[i];
+   const b=alive[j];
 
-  for(let owner of alive){
-   if(!owner.alive||toucher===owner)continue;
+   if(!a.alive||!b.alive)continue;
 
-   // A car touches another player's exposed trail.
-   // The car that touched the trail dies.
-   if(touchesTrail(toucher,owner.trail)){
-    eliminate(toucher,owner);
+   // A touches B's trail: B dies; A survives.
+   if(touchesTrail(a,b.trail)){
+    eliminate(b,a);
     if(!running)return;
-    break;
+    continue;
    }
 
-   // A player's exposed trail touches another player's car.
-   // The car that was touched dies.
-   if(touchesTrail(owner,toucher.trail)){
-    eliminate(toucher,owner);
+   // B touches A's trail: A dies; B survives.
+   if(touchesTrail(b,a.trail)){
+    eliminate(a,b);
     if(!running)return;
    }
   }
@@ -187,7 +220,9 @@ function combat(){
 
 function touchesTrail(player,trail){
  for(let pt of trail){
-  if(Math.hypot(player.x-pt.x,player.y-pt.y)<19)return true;
+  if(Math.hypot(player.x-pt.x,player.y-pt.y)<19){
+   return true;
+  }
  }
  return false;
 }
@@ -195,16 +230,523 @@ function touchesTrail(player,trail){
 function steerHuman(){
  if(pointer===null)return;
  let p=players[0];
- let dx=pointer.x-W/2,dy=pointer.y-H/2;
- if(Math.hypot(dx,dy)>12)p.angle=Math.atan2(dy,dx);
+ let dx=pointer.x-W/2;
+ let dy=pointer.y-H/2;
+ if(Math.hypot(dx,dy)>12){
+  p.angle=Math.atan2(dy,dx);
+ }
 }
+
 function update(dt){
  let me=players[0];
  if(!me||!me.alive)return;
+
  steerHuman();
 
  for(let p of players){
   if(!p.alive)continue;
+
+  if(p.id!==0){
+   p.ai-=dt;
+   if(p.ai<=0){
+    p.ai=.8+Math.random()*2;
+    p.angle+=(Math.random()-.5)*1.5;
+   }
+  }
+
+  let oldX=p.x,oldY=p.y;
+
+  p.x+=Math.cos(p.angle)*p.speed*dt;
+  p.y+=Math.sin(p.angle)*p.speed*dt;
+
+  if(!inside(p.x,p.y)){
+   p.angle+=Math.PI*(.65+Math.random()*.7);
+   p.x=oldX;
+   p.y=oldY;
+  }
+
+  if(Math.hypot(p.x-oldX,p.y-oldY)>0){
+   if(!owned(p.x,p.y,p.id)){
+    let lastPoint=p.trail[p.trail.length-1];
+    if(!lastPoint||Math.hypot(p.x-lastPoint.x,p.y-lastPoint.y)>4){
+     p.trail.push({x:p.x,y:p.y});
+    }
+   }else if(p.trail.length){
+    capture(p);
+   }
+  }
+ }
+
+ combat();
+ if(!running)return;
+
+ camera.x=Math.max(0,Math.min(world-W,me.x-W/2));
+ camera.y=Math.max(0,Math.min(world-H,me.y-H/2));
+}
+
+function capture(p){
+ let gained=0;
+
+ for(let pt of p.trail){
+  for(let ox=-2;ox<=2;ox++){
+   for(let oy=-2;oy<=2;oy++){
+    let xx=pt.x+ox*cell;
+    let yy=pt.y+oy*cell;
+
+    if(inside(xx,yy)&&!owned(xx,yy,p.id)){
+     paint(xx,yy,p.id);
+     gained++;
+    }
+   }
+  }
+ }
+
+ if(p.id===0){
+  coins+=gained*5;
+  toast("Land captured! +"+gained*5+" coins");
+ }
+
+ p.trail=[];
+}
+
+function draw(){
+ ctx.fillStyle="#0876b9";
+ ctx.fillRect(0,0,W,H);
+ ctx.save();
+ ctx.translate(-camera.x,-camera.y);
+
+ // Island
+ ctx.beginPath();
+ for(let a=0;a<=Math.PI*2+.01;a+=.02){
+  let wobble=1+.025*Math.sin(a*7)+.018*Math.cos(a*11);
+  let x=world/2+Math.cos(a)*world*.47*wobble;
+  let y=world/2+Math.sin(a)*world*.43*wobble;
+
+  if(a===0)ctx.moveTo(x,y);
+  else ctx.lineTo(x,y);
+ }
+ ctx.closePath();
+ ctx.fillStyle="#d2c47a";
+ ctx.fill();
+ ctx.strokeStyle="#fff0a8";
+ ctx.lineWidth=22;
+ ctx.stroke();
+
+ // Territory
+ for(let [k,id] of land){
+  let [gx,gy]=k.split(",").map(Number);
+  ctx.fillStyle=colors[id];
+  ctx.globalAlpha=.86;
+  ctx.fillRect(gx*cell,gy*cell,cell+1,cell+1);
+ }
+ ctx.globalAlpha=1;
+
+ // Visible trails
+ for(let p of players){
+  if(!p.alive||!p.trail.length)continue;
+
+  ctx.beginPath();
+  ctx.moveTo(p.trail[0].x,p.trail[0].y);
+
+  for(let pt of p.trail){
+   ctx.lineTo(pt.x,pt.y);
+  }
+
+  ctx.lineTo(p.x,p.y);
+  ctx.lineCap="round";
+  ctx.lineJoin="round";
+
+  ctx.strokeStyle="white";
+  ctx.lineWidth=23;
+  ctx.stroke();
+
+  ctx.strokeStyle=colors[p.id];
+  ctx.lineWidth=14;
+  ctx.stroke();
+ }
+
+ // Cars and names
+ for(let p of players){
+  if(!p.alive)continue;
+
+  ctx.save();
+  ctx.translate(p.x,p.y);
+  ctx.rotate(p.angle);
+  ctx.font="38px Arial";
+  ctx.textAlign="center";
+  ctx.textBaseline="middle";
+  ctx.shadowColor="#000";
+  ctx.shadowBlur=8;
+  ctx.fillText(cars[p.id],0,0);
+  ctx.restore();
+
+  ctx.fillStyle="white";
+  ctx.font="bold 13px Arial";
+  ctx.textAlign="center";
+  ctx.fillText(p.name,p.x,p.y-29);
+ }
+
+ ctx.restore();
+ drawMini();
+
+ let myCells=0;
+ for(let v of land.values()){
+  if(v===0)myCells++;
+ }
+
+ document.getElementById("coins").textContent=coins;
+ document.getElementById("kills").textContent=kills;
+ document.getElementById("land").textContent=Math.floor(myCells/400);
+ document.getElementById("level").textContent=level;
+}
+
+function drawMini(){
+ mc.fillStyle="#0876b9";
+ mc.fillRect(0,0,110,110);
+
+ mc.fillStyle="#c9bb73";
+ mc.beginPath();
+ mc.ellipse(55,55,49,44,0,0,Math.PI*2);
+ mc.fill();
+
+ for(let p of players){
+  if(!p.alive)continue;
+
+  mc.fillStyle=colors[p.id];
+  mc.beginPath();
+  mc.arc(p.x/world*110,p.y/world*110,3,0,Math.PI*2);
+  mc.fill();
+ }
+}
+
+function loop(t){
+ if(!running)return;
+
+ let dt=Math.min((t-last)/1000,.04);
+ last=t;
+
+ update(dt);
+ draw();
+
+ if(running)requestAnimationFrame(loop);
+}
+
+canvas.addEventListener("pointerdown",e=>{
+ pointer={x:e.clientX,y:e.clientY};
+ canvas.setPointerCapture(e.pointerId);
+});
+
+canvas.addEventListener("pointermove",e=>{
+ if(pointer){
+  pointer={x:e.clientX,y:e.clientY};
+ }
+});
+
+canvas.addEventListener("pointerup",()=>pointer=null);
+canvas.addEventListener("pointercancel",()=>pointer=null);
+</script>
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>HB LAND 18</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#071c38;color:white;font-family:Arial;overflow:hidden;touch-action:none}
+#game{width:100vw;height:100dvh;display:block}
+#hud{position:fixed;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;gap:5px;pointer-events:none}
+.panel{background:#07172ddd;border:1px solid #ffffff44;border-radius:12px;padding:9px;font-size:12px}
+#mini{position:fixed;right:10px;top:65px;width:110px;height:110px;border:2px solid white;border-radius:10px;background:#07172d}
+#help{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:#07172ddd;padding:9px 14px;border-radius:20px;font-size:12px;white-space:nowrap}
+#lobby,#message{position:fixed;inset:0;background:radial-gradient(circle,#164b70,#06152d 75%);display:flex;align-items:center;justify-content:center;text-align:center;padding:20px}
+#lobbyBox,#messageBox{width:min(420px,100%);background:#0c2341;border:1px solid #5be7d2;border-radius:25px;padding:25px}
+.logo{font-size:65px}
+h1{font-size:35px;margin:8px;color:#5be7d2}
+button{border:0;border-radius:14px;padding:14px 25px;background:#50e6c0;color:#062339;font-size:18px;font-weight:bold;margin:8px}
+#message{display:none;background:#00152dcc}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="hud" style="display:none">
+ <div class="panel">🏝️ HB LAND 18<br>Land: <span id="land">0</span>%</div>
+ <div class="panel">🪙 <span id="coins">0</span><br>🏆 <span id="kills">0</span> kills</div>
+ <div class="panel">LEVEL <span id="level">1</span><br>Distance: <span id="distance">0</span> km</div>
+</div>
+
+<canvas id="mini" width="110" height="110" style="display:none"></canvas>
+<div id="help" style="display:none">👆 Drag to steer your car</div>
+
+<div id="lobby">
+ <div id="lobbyBox">
+  <div class="logo">🦢</div>
+  <h1>HB LAND 18</h1>
+  <p>Build your land. Outsmart your rivals.</p>
+  <p>🏎️ 8 players · 🏝️ Territory battle</p>
+  <button onclick="startGame()">PLAY NOW</button>
+  <p style="font-size:12px;color:#b8d7e9">Computer-controlled rivals</p>
+ </div>
+</div>
+
+<div id="message">
+ <div id="messageBox">
+  <h1 id="result">GAME OVER</h1>
+  <p id="resultText"></p>
+  <button onclick="startGame()">PLAY AGAIN</button>
+  <button onclick="goLobby()">LOBBY</button>
+ </div>
+</div>
+
+<script>
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+const mini=document.getElementById("mini");
+const mc=mini.getContext("2d");
+
+let W,H,dpr,players=[],running=false,coins=0,kills=0;
+let camera={x:0,y:0},last=0;
+const world=2400,cell=20;
+let land=new Map(),pointer=null,level=1;
+
+const colors=["#39f5c7","#ff5368","#ffd34f","#55a9ff","#bd75ff","#ff984e","#f77fc5","#a8e85b"];
+const names=["YOU","Alex","Ryan","Sam","Noah","Leo","Aiden","Max"];
+const cars=["🏎️","🚗","🏎️","🚙","🏎️","🚕","🏎️","🚓"];
+
+function resize(){
+ dpr=Math.min(devicePixelRatio||1,2);
+ W=innerWidth;H=innerHeight;
+ canvas.width=W*dpr;canvas.height=H*dpr;
+ canvas.style.width=W+"px";canvas.style.height=H+"px";
+ ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+addEventListener("resize",resize);resize();
+
+function key(x,y){
+ return Math.floor(x/cell)+","+Math.floor(y/cell);
+}
+function owned(x,y,id){return land.get(key(x,y))===id}
+function paint(x,y,id){land.set(key(x,y),id)}
+
+function inside(x,y){
+ let nx=(x-world/2)/(world*.47);
+ let ny=(y-world/2)/(world*.43);
+ return nx*nx+ny*ny<1;
+}
+
+function randomPosition(){
+ for(let i=0;i<500;i++){
+  let x=200+Math.random()*(world-400);
+  let y=200+Math.random()*(world-400);
+  if(inside(x,y)&&players.every(p=>Math.hypot(p.x-x,p.y-y)>250)){
+   return{x,y};
+  }
+ }
+ return{x:world/2,y:world/2};
+}
+
+function makePlayer(id,x,y){
+ return {
+  id,name:names[id],x,y,
+  angle:Math.random()*6.28,
+  speed:id===0?180:125,
+  trail:[],trailDistance:0,
+  alive:true,ai:0
+ };
+}
+
+function startGame(){
+ land.clear();players=[];coins=0;kills=0;level=1;
+ players.push(makePlayer(0,world/2,world/2));
+
+ for(let i=1;i<8;i++){
+  let p=randomPosition();
+  players.push(makePlayer(i,p.x,p.y));
+ }
+
+ for(let p of players){
+  for(let x=-3;x<=3;x++){
+   for(let y=-3;y<=3;y++){
+    paint(p.x+x*cell,p.y+y*cell,p.id);
+   }
+  }
+ }
+
+ document.getElementById("lobby").style.display="none";
+ document.getElementById("message").style.display="none";
+ document.getElementById("hud").style.display="flex";
+ document.getElementById("mini").style.display="block";
+ document.getElementById("help").style.display="block";
+
+ running=true;
+ last=performance.now();
+ requestAnimationFrame(loop);
+}
+
+function goLobby(){
+ running=false;
+ document.getElementById("message").style.display="none";
+ document.getElementById("lobby").style.display="flex";
+}
+
+function finish(win,reason){
+ if(!running)return;
+ running=false;
+ document.getElementById("result").textContent=win?"🏆 YOU WIN!":"GAME OVER";
+ document.getElementById("resultText").textContent=reason;
+ document.getElementById("message").style.display="flex";
+}
+
+function toast(s){
+ document.getElementById("help").textContent=s;
+}
+
+/* Give every cell belonging to the defeated player to the survivor. */
+function eliminate(victim,killer){
+ if(!victim.alive||!killer||!killer.alive)return;
+
+ victim.alive=false;
+ victim.trail=[];
+
+ for(let [k,v] of land){
+  if(v===victim.id)land.set(k,killer.id);
+ }
+
+ if(killer.id===0){
+  kills++;
+  toast("You gained all their land!");
+ }
+
+ if(victim.id===0){
+  finish(false,"A rival touched your exposed trail!");
+  return;
+ }
+
+ const alive=players.filter(p=>p.alive);
+ if(alive.length===1&&alive[0].id===0){
+  finish(true,"You defeated every rival!");
+ }
+}
+
+/* The trail owner dies when another car touches their trail. */
+function touchesTrail(player,trail){
+ for(let pt of trail){
+  if(Math.hypot(player.x-pt.x,player.y-pt.y)<19)return true;
+ }
+ return false;
+}
+
+function combat(){
+ const alive=players.filter(p=>p.alive);
+
+ for(let i=0;i<alive.length;i++){
+  for(let j=i+1;j<alive.length;j++){
+   const a=alive[i],b=alive[j];
+   if(!a.alive||!b.alive)continue;
+
+   // A touches B's trail: B dies.
+   if(touchesTrail(a,b.trail)){
+    eliminate(b,a);
+    if(!running)return;
+    continue;
+   }
+
+   // B touches A's trail: A dies.
+   if(touchesTrail(b,a.trail)){
+    eliminate(a,b);
+    if(!running)return;
+   }
+  }
+ }
+}
+
+function steerHuman(){
+ if(pointer===null)return;
+ let p=players[0];
+ let dx=pointer.x-W/2;
+ let dy=pointer.y-H/2;
+ if(Math.hypot(dx,dy)>12)p.angle=Math.atan2(dy,dx);
+}
+
+/* Point inside polygon test. */
+function pointInPolygon(x,y,poly){
+ let insidePoly=false;
+ for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+  let a=poly[i],b=poly[j];
+  let crosses=((a.y>y)!==(b.y>y))&&
+   (x<(b.x-a.x)*(y-a.y)/(b.y-a.y)+a.x);
+  if(crosses)insidePoly=!insidePoly;
+ }
+ return insidePoly;
+}
+
+/*
+Capture ONLY cells whose centres are inside the shape
+made by the player's trail. No extra brush or square padding.
+*/
+function capture(p){
+ if(p.trail.length<3){
+  p.trail=[];
+  p.trailDistance=0;
+  return;
+ }
+
+ const polygon=p.trail.concat([{x:p.x,y:p.y}]);
+ let minX=world,maxX=0,minY=world,maxY=0;
+
+ for(let pt of polygon){
+  minX=Math.min(minX,pt.x);
+  maxX=Math.max(maxX,pt.x);
+  minY=Math.min(minY,pt.y);
+  maxY=Math.max(maxY,pt.y);
+ }
+
+ let gained=0;
+ const startX=Math.max(0,Math.floor(minX/cell));
+ const endX=Math.min(world/cell-1,Math.floor(maxX/cell));
+ const startY=Math.max(0,Math.floor(minY/cell));
+ const endY=Math.min(world/cell-1,Math.floor(maxY/cell));
+
+ for(let gx=startX;gx<=endX;gx++){
+  for(let gy=startY;gy<=endY;gy++){
+   const x=gx*cell+cell/2;
+   const y=gy*cell+cell/2;
+   if(!inside(x,y))continue;
+
+   if(pointInPolygon(x,y,polygon)){
+    const k=gx+","+gy;
+    if(land.get(k)!==p.id){
+     land.set(k,p.id);
+     gained++;
+    }
+   }
+  }
+ }
+
+ // Coins: 10 coins for each 1 km of trail travelled.
+ if(p.id===0){
+  const earned=Math.floor(p.trailDistance/1000*10);
+  coins+=earned;
+  toast("Shape captured! +"+earned+" coins");
+ }
+
+ p.trail=[];
+ p.trailDistance=0;
+}
+
+function update(dt){
+ let me=players[0];
+ if(!me||!me.alive)return;
+
+ steerHuman();
+
+ for(let p of players){
+  if(!p.alive)continue;
+
   if(p.id!==0){
    p.ai-=dt;
    if(p.ai<=0){
@@ -222,8 +764,12 @@ function update(dt){
    p.x=oldX;p.y=oldY;
   }
 
-  if(Math.hypot(p.x-oldX,p.y-oldY)>0){
+  const moved=Math.hypot(p.x-oldX,p.y-oldY);
+
+  if(moved>0){
    if(!owned(p.x,p.y,p.id)){
+    p.trailDistance+=moved;
+
     let lastPoint=p.trail[p.trail.length-1];
     if(!lastPoint||Math.hypot(p.x-lastPoint.x,p.y-lastPoint.y)>4){
      p.trail.push({x:p.x,y:p.y});
@@ -233,331 +779,139 @@ function update(dt){
    }
   }
  }
+
  combat();
  if(!running)return;
 
  camera.x=Math.max(0,Math.min(world-W,me.x-W/2));
  camera.y=Math.max(0,Math.min(world-H,me.y-H/2));
 }
-function capture(p){
- let gained=0;
- for(let pt of p.trail){
-  for(let ox=-2;ox<=2;ox++)for(let oy=-2;oy<=2;oy++){
-   let xx=pt.x+ox*cell,yy=pt.y+oy*cell;
-   if(inside(xx,yy)&&!owned(xx,yy,p.id)){
-    paint(xx,yy,p.id);gained++;
-   }
-  }
- }
- if(p.id===0){
-  coins+=gained*5;
-  toast("Land captured! +"+gained*5+" coins");
- }
- p.trail=[];
-}
-function draw(){
- ctx.fillStyle="#0876b9";ctx.fillRect(0,0,W,H);
- ctx.save();ctx.translate(-camera.x,-camera.y);
 
+function draw(){
+ ctx.fillStyle="#0876b9";
+ ctx.fillRect(0,0,W,H);
+ ctx.save();
+ ctx.translate(-camera.x,-camera.y);
+
+ // Island
  ctx.beginPath();
  for(let a=0;a<=Math.PI*2+.01;a+=.02){
   let wobble=1+.025*Math.sin(a*7)+.018*Math.cos(a*11);
   let x=world/2+Math.cos(a)*world*.47*wobble;
   let y=world/2+Math.sin(a)*world*.43*wobble;
-  if(a===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  if(a===0)ctx.moveTo(x,y);
+  else ctx.lineTo(x,y);
  }
- ctx.closePath();ctx.fillStyle="#d2c47a";ctx.fill();
- ctx.strokeStyle="#fff0a8";ctx.lineWidth=22;ctx.stroke();
+ ctx.closePath();
+ ctx.fillStyle="#d2c47a";
+ ctx.fill();
+ ctx.strokeStyle="#fff0a8";
+ ctx.lineWidth=22;
+ ctx.stroke();
 
+ // Owned land
  for(let [k,id] of land){
   let [gx,gy]=k.split(",").map(Number);
-  ctx.fillStyle=colors[id];ctx.globalAlpha=.86;
+  ctx.fillStyle=colors[id];
+  ctx.globalAlpha=.86;
   ctx.fillRect(gx*cell,gy*cell,cell+1,cell+1);
  }
  ctx.globalAlpha=1;
 
- // Bright, thick exposed trails
+ // Exposed trails
  for(let p of players){
   if(!p.alive||!p.trail.length)continue;
+
   ctx.beginPath();
   ctx.moveTo(p.trail[0].x,p.trail[0].y);
   for(let pt of p.trail)ctx.lineTo(pt.x,pt.y);
   ctx.lineTo(p.x,p.y);
-  ctx.lineCap="round";ctx.lineJoin="round";
-  ctx.strokeStyle="white";ctx.lineWidth=23;ctx.stroke();
-  ctx.strokeStyle=colors[p.id];ctx.lineWidth=14;ctx.stroke();
+
+  ctx.lineCap="round";
+  ctx.lineJoin="round";
+  ctx.strokeStyle="white";
+  ctx.lineWidth=15;
+  ctx.stroke();
+
+  ctx.strokeStyle=colors[p.id];
+  ctx.lineWidth=9;
+  ctx.stroke();
  }
 
+ // Cars
  for(let p of players){
   if(!p.alive)continue;
-  ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle);
-  ctx.font="38px Arial";ctx.textAlign="center";ctx.textBaseline="middle";
-  ctx.shadowColor="#000";ctx.shadowBlur=8;
-  ctx.fillText(cars[p.id],0,0);ctx.restore();
-  ctx.fillStyle="white";ctx.font="bold 13px Arial";
-  ctx.textAlign="center";ctx.fillText(p.name,p.x,p.y-29);
+
+  ctx.save();
+  ctx.translate(p.x,p.y);
+  ctx.rotate(p.angle);
+  ctx.font="38px Arial";
+  ctx.textAlign="center";
+  ctx.textBaseline="middle";
+  ctx.shadowColor="#000";
+  ctx.shadowBlur=8;
+  ctx.fillText(cars[p.id],0,0);
+  ctx.restore();
+
+  ctx.fillStyle="white";
+  ctx.font="bold 13px Arial";
+  ctx.textAlign="center";
+  ctx.fillText(p.name,p.x,p.y-29);
  }
+
  ctx.restore();
  drawMini();
 
  let myCells=0;
  for(let v of land.values())if(v===0)myCells++;
+
  document.getElementById("coins").textContent=coins;
  document.getElementById("kills").textContent=kills;
- document.getElementById("land").textContent=Math.floor(myCells/400);
+ document.getElementById("land").textContent=Math.floor(myCells/14400*100);
  document.getElementById("level").textContent=level;
+ document.getElementById("distance").textContent=
+  (players[0].trailDistance/1000).toFixed(2);
 }
+
 function drawMini(){
- mc.fillStyle="#0876b9";mc.fillRect(0,0,110,110);
- mc.fillStyle="#c9bb73";mc.beginPath();
- mc.ellipse(55,55,49,44,0,0,Math.PI*2);mc.fill();
+ mc.fillStyle="#0876b9";
+ mc.fillRect(0,0,110,110);
+ mc.fillStyle="#c9bb73";
+ mc.beginPath();
+ mc.ellipse(55,55,49,44,0,0,Math.PI*2);
+ mc.fill();
+
  for(let p of players){
   if(!p.alive)continue;
   mc.fillStyle=colors[p.id];
-  mc.beginPath();mc.arc(p.x/world*110,p.y/world*110,3,0,Math.PI*2);mc.fill();
+  mc.beginPath();
+  mc.arc(p.x/world*110,p.y/world*110,3,0,Math.PI*2);
+  mc.fill();
  }
 }
+
 function loop(t){
  if(!running)return;
- let dt=Math.min((t-last)/1000,.04);last=t;
- update(dt);draw();
+ let dt=Math.min((t-last)/1000,.04);
+ last=t;
+ update(dt);
+ draw();
  if(running)requestAnimationFrame(loop);
 }
-canvas.addEventListener("pointerdown",e=>{
- pointer={x:e.clientX,y:e.clientY};
- canvas.setPointerCapture(e.pointerId);
-});
-canvas.addEventListener("pointermove",e=>{
- if(pointer)pointer={x:e.clientX,y:e.clientY};
-});
-canvas.addEventListener("pointerup",()=>pointer=null);
-canvas.addEventListener("pointercancel",()=>pointer=null);
-</script>
-</body>
-</html>
-r("pointermove",e=>{
- if(pointer)pointer={x:e.clientX,y:e.clientY};
-});
-canvas.addEventListener("pointerup",()=>pointer=null);
-canvas.addEventListener("pointercancel",()=>pointer=null);
-</script>
-</body>
-</html>
-inue;
-  mc.fillStyle=colors[p.id];
-  mc.beginPath();mc.arc(p.x/world*110,p.y/world*110,3,0,Math.PI*2);mc.fill();
- }
-}
-function loop(t){
- if(!running)return;
- let dt=Math.min((t-last)/1000,.04);last=t;
- update(dt);draw();
- requestAnimationFrame(loop);
-}
-canvas.addEventListener("pointerdown",e=>{
- pointer={x:e.clientX,y:e.clientY};
- canvas.setPointerCapture(e.pointerId);
-});
-canvas.addEventListener("pointermove",e=>{
- if(pointer)pointer={x:e.clientX,y:e.clientY};
-});
-canvas.addEventListener("pointerup",()=>pointer=null);
-canvas.addEventListener("pointercancel",()=>pointer=null);
-</script>
-</body>
-</html>
-0&&y>=0&&x<SIZE&&y<SIZE;}
-function paintHome(p){
- for(let y=-3;y<=3;y++)for(let x=-3;x<=3;x++){
- if(inside(p.x+x,p.y+y))map[index(p.x+x,p.y+y)]=p.id;
- }
-}
-function startGame(country){
- countryName=country;closeModal();
- $("screen").style.display="none";$("nav").style.display="none";
- $("game").style.display="block";
- resizeGame();
- map=new Array(SIZE*SIZE).fill(-1);
- me={id:0,x:50,y:50,dx:1,dy:0,trail:[],alive:true};
- bots=[
- {id:1,x:17,y:17,dx:1,dy:0,trail:[],alive:true},
- {id:2,x:82,y:18,dx:-1,dy:0,trail:[],alive:true},
- {id:3,x:18,y:82,dx:1,dy:0,trail:[],alive:true},
- {id:4,x:82,y:82,dx:-1,dy:0,trail:[],alive:true}
- ];
- paintHome(me);bots.forEach(paintHome);
- dir={x:1,y:0};trail=me.trail;
- running=true;clearInterval(timer);timer=setInterval(updateGame,115);
- drawGame();
-}
-function stopGame(){running=false;clearInterval(timer);}
-function resizeGame(){
- let d=Math.min(devicePixelRatio||1,2);
- canvas.width=innerWidth*d;canvas.height=innerHeight*d;
- canvas.style.width=innerWidth+"px";canvas.style.height=innerHeight+"px";
- ctx.setTransform(d,0,0,d,0,0);
-}
-addEventListener("resize",()=>{if(running)resizeGame();});
-function steer(x,y){
- if(x===-dir.x&&y===-dir.y)return;
- dir={x,y};me.dx=x;me.dy=y;
-}
-canvas.addEventListener("pointerdown",e=>{
- if(!running)return;pointer={x:e.clientX,y:e.clientY};
- canvas.setPointerCapture(e.pointerId);
-});
-canvas.addEventListener("pointermove",e=>{
- if(!pointer||!running)return;
- let dx=e.clientX-pointer.x,dy=e.clientY-pointer.y;
- if(Math.max(Math.abs(dx),Math.abs(dy))>12){
- if(Math.abs(dx)>Math.abs(dy))steer(dx>0?1:-1,0);
- else steer(0,dy>0?1:-1);
- pointer={x:e.clientX,y:e.clientY};
- }
-});
-canvas.addEventListener("pointerup",()=>pointer=null);
-canvas.addEventListener("pointercancel",()=>pointer=null);
 
-function capture(p){
- let outside=new Uint8Array(SIZE*SIZE),queue=[];
- let blocked=new Uint8Array(SIZE*SIZE);
- for(let i=0;i<map.length;i++)if(map[i]===p.id)blocked[i]=1;
- p.trail.forEach(i=>blocked[i]=1);
- function add(i){
- if(!blocked[i]&&!outside[i]){outside[i]=1;queue.push(i);}
- }
- for(let x=0;x<SIZE;x++){add(index(x,0));add(index(x,SIZE-1));}
- for(let y=0;y<SIZE;y++){add(index(0,y));add(index(SIZE-1,y));}
- for(let q=0;q<queue.length;q++){
- let i=queue[q],x=i%SIZE,y=Math.floor(i/SIZE);
- if(x>0)add(i-1);if(x<SIZE-1)add(i+1);
- if(y>0)add(i-SIZE);if(y<SIZE-1)add(i+SIZE);
- }
- let gained=0;
- for(let i=0;i<map.length;i++){
- if(!outside[i]&&map[i]!==p.id){map[i]=p.id;gained++;}
- }
- p.trail=[];
- if(p.id===0&&gained){
- let reward=Math.max(5,Math.floor(gained/10));
- data.coins+=reward;data.captures++;
- toast("+"+reward+" COINS!");
- save();
- }
-}
-function botMove(p){
- if(Math.random()<.12){
- let ds=[[1,0],[-1,0],[0,1],[0,-1]].filter(d=>!(d[0]===-p.dx&&d[1]===-p.dy));
- let d=ds[Math.floor(Math.random()*ds.length)];p.dx=d[0];p.dy=d[1];
- }
-}
-function move(p){
- if(!p.alive)return;
- if(p.id!==0)botMove(p);
- let x=p.x+p.dx,y=p.y+p.dy;
- if(!inside(x,y)){p.dx=-p.dx;p.dy=-p.dy;return;}
- let i=index(x,y);
- if(p.trail.includes(i)){
- if(p.id===0){p.trail=[];toast("Trail lost!");}
- else p.trail=[];
- return;
- }
- p.x=x;p.y=y;
- if(map[i]===p.id){
- if(p.trail.length)capture(p);
- }else p.trail.push(i);
-}
-function updateGame(){
- if(!running)return;
- move(me);bots.forEach(move);
- let count=map.filter(v=>v===0).length;
- let pct=count/(SIZE*SIZE)*100;
- $("fill").style.width=pct+"%";
- $("percent").textContent=pct.toFixed(1)+"% CAPTURED";
- data.best=Math.max(data.best,pct);
- data.level=1+Math.floor(data.best/5);
- $("board").innerHTML="<b>🏆 LEADERBOARD</b><br>1 YOU "+pct.toFixed(1)+"%<br>2 RED "+area(1)+"%<br>3 BLUE "+area(2)+"%<br>4 GREEN "+area(3)+"%";
- save();drawGame();
-}
-function area(id){
- return (map.filter(v=>v===id).length/100).toFixed(1);
-}
-function drawGame(){
- if(!running)return;
- let w=innerWidth,h=innerHeight;
- cell=Math.max(8,Math.min(20,w/18));
- camX=Math.max(0,Math.min(SIZE-Math.ceil(w/cell),me.x-Math.floor(w/cell/2)));
- camY=Math.max(0,Math.min(SIZE-Math.ceil(h/cell),me.y-Math.floor(h/cell/2)));
- ctx.fillStyle="#eafff6";ctx.fillRect(0,0,w,h);
- for(let y=0;y<Math.ceil(h/cell)+1;y++){
- for(let x=0;x<Math.ceil(w/cell)+1;x++){
- let wx=camX+x,wy=camY+y;if(!inside(wx,wy))continue;
- let owner=map[index(wx,wy)];
- if(owner>=0){ctx.fillStyle=colors[owner];ctx.fillRect(x*cell,y*cell,cell+.5,cell+.5);}
- }
- }
- playersDraw(me);bots.forEach(playersDraw);
-}
-function playersDraw(p){
- if(p.trail.length){
- ctx.beginPath();ctx.lineCap="round";ctx.lineJoin="round";
- ctx.lineWidth=cell*.95;ctx.strokeStyle=colors[p.id];
- p.trail.forEach((i,k)=>{
- let x=(i%SIZE-camX)*cell+cell/2;
- let y=(Math.floor(i/SIZE)-camY)*cell+cell/2;
- if(k===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
- });
- ctx.stroke();
- }
- let x=(p.x-camX)*cell+cell/2,y=(p.y-camY)*cell+cell/2;
- ctx.save();ctx.translate(x,y);ctx.rotate(p.dx===1?0:p.dx===-1?Math.PI:p.dy===1?Math.PI/2:-Math.PI/2);
- ctx.fillStyle="#172c68";ctx.fillRect(-cell*.65,-cell*.48,cell*1.3,cell*.96);
- ctx.fillStyle=p.id===0?cars[data.car][0]==="🦢"?"#fff0a3":"#ffcf28":colors[p.id];
- ctx.beginPath();ctx.roundRect(-cell*.58,-cell*.4,cell*1.16,cell*.8,cell*.2);ctx.fill();
- ctx.fillStyle="#b9f4ff";ctx.fillRect(-cell*.1,-cell*.3,cell*.4,cell*.6);
- ctx.restore();
-}
-function drawGame(){}
-
-/* Repaint function */
-function renderGame(){
- if(!running)return;
- let w=innerWidth,h=innerHeight;
- ctx.fillStyle="#eafff6";ctx.fillRect(0,0,w,h);
- let size=cell;
- for(let y=0;y<h/size+1;y++)for(let x=0;x<w/size+1;x++){
- let wx=camX+x,wy=camY+y;if(!inside(wx,wy))continue;
- let owner=map[index(wx,wy)];
- if(owner>=0){ctx.fillStyle=colors[owner];ctx.fillRect(x*size,y*size,size+.5,size+.5);}
- }
- [me,...bots].forEach(p=>{
- if(p.trail.length){
- ctx.beginPath();ctx.lineCap="round";ctx.lineJoin="round";
- ctx.lineWidth=size*.95;ctx.strokeStyle=colors[p.id];
- p.trail.forEach((i,k)=>{
- let x=(i%SIZE-camX)*size+size/2,y=(Math.floor(i/SIZE)-camY)*size+size/2;
- if(k===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
- });ctx.stroke();
- }
- let x=(p.x-camX)*size+size/2,y=(p.y-camY)*size+size/2;
- ctx.fillStyle=p.id===0?"#ffcf28":colors[p.id];
- ctx.beginPath();ctx.roundRect(x-size*.55,y-size*.4,size*1.1,size*.8,7);ctx.fill();
- ctx.strokeStyle="#07358d";ctx.lineWidth=2;ctx.stroke();
- });
-}
-function toast(s){$("toast").textContent=s;$("toast").style.display="block";setTimeout(()=>$("toast").style.display="none",1300);}
+canvas.addEventListener("pointerdown",e=>{
+ pointer={x:e.clientX,y:e.clientY};
+ canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener("pointermove",e=>{
+ if(pointer)pointer={x:e.clientX,y:e.clientY};
+});
+canvas.addEventListener("pointerup",()=>pointer=null);
+canvas.addEventListener("pointercancel",()=>pointer=null);
 </script>
 </body>
-</html>ff";ctx.font="bold 10px Arial";ctx.textAlign="center";ctx.fillText(names[p.i],x,y-17);}}
- drawMini(); 
-}
-function drawMini(){let im=mctx.createImageData(160,160);for(let y=0;y<160;y++)for(let x=0;x<160;x++){let o=land[idx(Math.floor(x/1.6),Math.floor(y/1.6))],c=o<0?[38,54,76]:rgb(palette[o]),k=(y*160+x)*4;im.data[k]=c[0];im.data[k+1]=c[1];im.data[k+2]=c[2];im.data[k+3]=255;}mctx.putImageData(im,0,0);for(let p of players)if(p.alive){mctx.fillStyle="#fff";mctx.beginPath();mctx.arc(p.x*1.6,p.y*1.6,3,0,7);mctx.fill();}}
-function rgb(h){return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];}
-function update(){let count=land.reduce((a,v)=>a+(v===0),0),pct=count/TOTAL*100,level=1+Math.floor(pct/5);document.getElementById("score").textContent=pct.toFixed(1)+"%";document.getElementById("level").textContent=level;document.getElementById("coins").textContent=save.coins;document.getElementById("leader").innerHTML="<b>PLAYERS</b><br>"+players.map(p=>names[p.i]+(p.alive?" ●":" ✕")).join("<br>");}
-function toast(msg){let el=document.getElementById("toast");el.textContent=msg;el.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(()=>el.style.display="none",1300);}
-function step(){if(!started||gameOver)return;tick++;players.forEach(move);update();draw();}
-function openPanel(title,html){document.getElementById("panelTitle").textContent=title;document.getElementById("panelBody").innerHTML=html;document.getElementById("panel").style.display="flex";}
-function garage(){let html='<p style="text-align:center;color:#c7d5e8">Coins: 🪙 '+save.coins+'</p><div class="car-grid">';cars.forEach((c,i)=>{let owned=save.owned.includes(i),selected=save.selected===i;html+='<div class="car"><div class="emoji">'+c.emoji+'</div><b>'+c.name+'</b><small>'+(selected?"SELECTED":owned?"OWNED":c.price+" coins")+'</small><button data-car="'+i+'">'+(selected?"SELECTED":owned?"SELECT":"BUY")+'</button></div>';});html+='</div>';openPanel("🚗 CAR GARAGE",html);document.querySelectorAll("[data-car]").forEach(b=>b.onclick=()=>{let i=+b.dataset.car,c=cars[i];if(save.owned.includes(i)){save.selected=i;persist();garage();}else if(save.coins>=c.price){save.coins-=c.price;save.owned.push(i);save.selected=i;persist();garage();}else toast("Not enough coins yet!");});}
+</html>
+age();}else if(save.coins>=c.price){save.coins-=c.price;save.owned.push(i);save.selected=i;persist();garage();}else toast("Not enough coins yet!");});}
 function missions(){openPanel("🏆 MISSIONS",'<p>🎯 Claim territory to earn coins.</p><p>🗺️ Capture 3 areas: '+Math.min(save.captures,3)+'/3</p><p>🪙 Every successful capture gives coins based on land claimed.</p><p>Total coins: '+save.coins+'</p>');}
 document.getElementById("play").onclick=reset;document.getElementById("garageLobby").onclick=garage;document.getElementById("shopBtn").onclick=garage;document.getElementById("missions").onclick=missions;
 document.getElementById("help").onclick=()=>openPanel("HOW TO PLAY",'<p>1. Drag your finger across the arena to steer.</p><p>2. Leave your territory to draw a trail.</p><p>3. Return to your coloured land to capture the enclosed area.</p><p>4. Avoid crossing your own trail or the arena edge.</p><p>5. Earn coins and buy new cars in the garage.</p>');
