@@ -3,412 +3,544 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>HB LAND 18</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HB Land 18</title>
+
 <style>
-*{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#0876b9;color:white;font-family:Arial;touch-action:none}
-canvas{display:block}
-#game{width:100%;height:100%;touch-action:none}
-#hud{position:fixed;top:8px;left:8px;right:8px;display:none;justify-content:space-between;gap:5px;pointer-events:none}
-.panel{background:#07172de8;border:1px solid #ffffff55;border-radius:12px;padding:8px;font-size:12px;line-height:1.5}
-#mini{position:fixed;right:9px;top:72px;width:112px;height:112px;background:#061a33;border:2px solid white;border-radius:10px;display:none}
-#help{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:#07172de8;border-radius:20px;padding:9px 14px;font-size:12px;white-space:nowrap;display:none}
-#lobby,#end{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;background:radial-gradient(circle,#164b70,#06152d 75%)}
-#end{display:none;background:#00152deF}
-.box{width:min(420px,100%);background:#0c2341;border:1px solid #5be7d2;border-radius:24px;padding:24px}
-.logo{font-size:65px}
-h1{font-size:32px;color:#5be7d2;margin:8px}
-button{border:0;border-radius:14px;padding:14px 26px;background:#50e6c0;color:#062339;font-size:18px;font-weight:bold;margin:8px}
-.small{font-size:12px;color:#c5dbea;line-height:1.5}
+* { box-sizing:border-box; }
+html,body {
+  margin:0; width:100%; height:100%;
+  overflow:hidden; background:#101827;
+  color:white; font-family:Arial,sans-serif;
+  touch-action:none;
+}
+#gameScreen { display:none; width:100%; height:100%; }
+header {
+  height:58px; display:flex; align-items:center;
+  justify-content:space-around; background:#17243a;
+  font-size:12px; font-weight:bold;
+}
+header span { color:#50e6c0; }
+#world {
+  display:block; width:100%; height:calc(100% - 58px);
+  touch-action:none;
+}
+#startScreen {
+  position:fixed; inset:0; z-index:10;
+  display:flex; flex-direction:column;
+  justify-content:center; align-items:center;
+  background:radial-gradient(circle,#263c55,#101827 75%);
+  text-align:center;
+}
+.logo {
+  font-size:85px; color:#50e6c0;
+  text-shadow:0 0 25px #50e6c0;
+}
+#startScreen h1 {
+  font-size:38px; letter-spacing:5px; margin:5px;
+}
+#startScreen p { color:#c0d3df; }
+#startBtn {
+  margin-top:25px; padding:17px 65px;
+  border:0; border-radius:35px;
+  background:#50e6c0; color:#10202a;
+  font-weight:bold; font-size:20px;
+}
+#mini {
+  position:absolute; top:70px; right:10px;
+  width:115px; height:115px;
+  border:2px solid white; border-radius:8px;
+  background:#17243a;
+}
+#board {
+  position:absolute; top:70px; left:10px;
+  padding:9px; border-radius:8px;
+  background:#17243add; font-size:11px;
+  line-height:1.8;
+}
+#hint {
+  position:absolute; bottom:12px; left:50%;
+  transform:translateX(-50%);
+  padding:8px 13px; border-radius:20px;
+  background:#17243acc; color:#d7e9ed;
+  font-size:12px; white-space:nowrap;
+}
+#restart {
+  position:absolute; bottom:12px; left:10px;
+  border:0; border-radius:20px;
+  padding:10px 15px; background:#50e6c0;
+  font-weight:bold;
+}
+#levelBar {
+  position:absolute; top:60px; left:50%;
+  transform:translateX(-50%);
+  font-size:11px; color:#fff;
+}
+#message {
+  display:none; position:absolute; top:40%;
+  left:50%; transform:translate(-50%,-50%);
+  background:#17243a; border:2px solid #50e6c0;
+  padding:22px; border-radius:15px;
+  text-align:center; z-index:5;
+}
 </style>
 </head>
+
 <body>
-<canvas id="game"></canvas>
 
-<div id="hud">
- <div class="panel">🏝️ HB LAND 18<br>Land: <span id="land">0</span>%</div>
- <div class="panel">🪙 <span id="coins">0</span><br>🏆 <span id="kills">0</span> kills</div>
- <div class="panel">LEVEL <span id="level">1</span><br>Trail: <span id="distance">0</span> km</div>
-</div>
-
-<canvas id="mini" width="112" height="112"></canvas>
-<div id="help">👆 Drag anywhere to steer</div>
-
-<div id="lobby">
- <div class="box">
+<div id="startScreen">
   <div class="logo">🦢</div>
   <h1>HB LAND 18</h1>
-  <p>Draw your trail. Capture your land. Beat your rivals.</p>
-  <p>🏎️ 8 players · 🏝️ Island arena</p>
-  <button onclick="startGame()">PLAY NOW</button>
-  <p class="small">This version uses computer-controlled rivals. It is not online multiplayer.</p>
- </div>
+  <p>Capture the land. Become the champion.</p>
+  <button id="startBtn">START GAME</button>
+  <p>Drag your finger to move</p>
 </div>
 
-<div id="end">
- <div class="box">
-  <h1 id="endTitle">GAME OVER</h1>
-  <p id="endText"></p>
-  <button onclick="startGame()">PLAY AGAIN</button>
-  <button onclick="showLobby()">LOBBY</button>
- </div>
+<div id="gameScreen">
+  <header>
+    <div>HB LAND 18</div>
+    <div>LAND: <span id="land">0%</span></div>
+    <div>LEVEL: <span id="level">1</span></div>
+    <div>RANK: <span id="rank">1</span></div>
+  </header>
+
+  <canvas id="world"></canvas>
+  <canvas id="mini"></canvas>
+
+  <div id="board">
+    <b>LEADERBOARD</b><br>
+    🟢 YOU<br>
+    🔴 RED<br>
+    🟡 GOLD<br>
+    🔵 BLUE
+  </div>
+
+  <div id="levelBar">NEXT LEVEL: 3% LAND</div>
+  <button id="restart">RESTART</button>
+  <div id="hint">👆 Drag your finger to steer</div>
+
+  <div id="message">
+    <h2 id="messageTitle">GAME OVER</h2>
+    <button id="again">PLAY AGAIN</button>
+  </div>
 </div>
 
 <script>
+(() => {
 "use strict";
 
-/* ---------------- GAME SETTINGS ---------------- */
-
-const WORLD = 2400;
-const CELL = 10;
-const KM_UNITS = 1000;
-const COINS_PER_KM = 10;
-const PLAYER_SPEED = 170;
-const BOT_SPEED = 125;
-const TRAIL_HIT_RADIUS = 17;
-
-const COLORS = [
- "#39f5c7","#ff5368","#ffd34f","#55a9ff",
- "#bd75ff","#ff984e","#f77fc5","#a8e85b"
-];
-
-const NAMES = [
- "YOU","Alex","Ryan","Sam","Noah","Leo","Aiden","Max"
-];
-
-const CAR_ICONS = [
- "🏎️","🚗","🚙","🏎️","🚕","🚗","🚙","🏎️"
-];
-
-const canvas = document.getElementById("game");
+const canvas = document.getElementById("world");
 const ctx = canvas.getContext("2d");
 const mini = document.getElementById("mini");
 const mctx = mini.getContext("2d");
 
-let screenW=0, screenH=0, dpr=1;
-let players=[];
-let land=new Map();
-let camera={x:0,y:0};
-let running=false;
-let pointer=null;
-let previousTime=0;
-let coins=0;
-let kills=0;
-let level=1;
-let totalTrailDistance=0;
-let lastMessage="";
+const SIZE = 120;
+const CELL = 20;
+const TOTAL = SIZE * SIZE;
+const EMPTY = -1;
 
-function resize(){
- dpr=Math.min(window.devicePixelRatio||1,2);
- screenW=window.innerWidth;
- screenH=window.innerHeight;
- canvas.width=Math.round(screenW*dpr);
- canvas.height=Math.round(screenH*dpr);
- canvas.style.width=screenW+"px";
- canvas.style.height=screenH+"px";
- ctx.setTransform(dpr,0,0,dpr,0,0);
+const COLORS = [
+  "#20c9a5",
+  "#ff5353",
+  "#ffc34d",
+  "#438cff",
+  "#b17aff"
+];
+
+const NAMES = ["YOU","RED","GOLD","BLUE","PURPLE"];
+const TARGETS = [3,6,10,15,22,30,40,50,60,70,80];
+
+let land, players, running=false, frame=0;
+let cameraX=0, cameraY=0;
+let player, level=1, trail=[];
+let lastTime=0;
+
+function index(x,y) {
+  return y * SIZE + x;
+}
+
+function inside(x,y) {
+  return x>=0 && y>=0 && x<SIZE && y<SIZE;
+}
+
+function cellAt(x,y) {
+  return {
+    x:Math.floor(x/CELL),
+    y:Math.floor(y/CELL)
+  };
+}
+
+function claimHome(id,cx,cy) {
+  for(let y=cy-4;y<=cy+4;y++) {
+    for(let x=cx-4;x<=cx+4;x++) {
+      if(inside(x,y)) land[index(x,y)] = id;
+    }
+  }
+}
+
+function makePlayer(id,x,y) {
+  return {
+    id,x,y,
+    dx:id===0?1:(id%2?1:-1),
+    dy:0,
+    alive:true,
+    trail:[],
+    turn:0,
+    score:0
+  };
+}
+
+function resetGame() {
+  land = new Int8Array(TOTAL);
+  land.fill(EMPTY);
+  trail=[];
+
+  players = [
+    makePlayer(0,1200,1200),
+    makePlayer(1,500,500),
+    makePlayer(2,1900,500),
+    makePlayer(3,500,1900),
+    makePlayer(4,1900,1900)
+  ];
+
+  players.forEach(p=>{
+    const c=cellAt(p.x,p.y);
+    claimHome(p.id,c.x,c.y);
+  });
+
+  player=players[0];
+  level=1;
+  frame=0;
+  updateStats();
+}
+
+function resize() {
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  canvas.width=Math.floor(canvas.clientWidth*dpr);
+  canvas.height=Math.floor(canvas.clientHeight*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+
+  mini.width=230;
+  mini.height=230;
 }
 window.addEventListener("resize",resize);
-resize();
 
-/* ---------------- MAP AND LAND ---------------- */
-
-function cellKey(gx,gy){
- return gx+","+gy;
-}
-
-function cellAt(x,y){
- return {
-  x:Math.floor(x/CELL),
-  y:Math.floor(y/CELL)
- };
-}
-
-function ownerAt(x,y){
- const c=cellAt(x,y);
- return land.get(cellKey(c.x,c.y));
-}
-
-function hasLand(x,y,id){
- return ownerAt(x,y)===id;
-}
-
-function setLand(gx,gy,id){
- if(gx<0||gy<0||gx>=WORLD/CELL||gy>=WORLD/CELL)return;
- land.set(cellKey(gx,gy),id);
-}
-
-function insideIsland(x,y){
- const nx=(x-WORLD/2)/(WORLD*.47);
- const ny=(y-WORLD/2)/(WORLD*.43);
- return nx*nx+ny*ny<1;
-}
-
-function randomPosition(){
- for(let tries=0;tries<1000;tries++){
-  const x=180+Math.random()*(WORLD-360);
-  const y=180+Math.random()*(WORLD-360);
-  if(insideIsland(x,y) &&
-     players.every(p=>Math.hypot(p.x-x,p.y-y)>260)){
-   return {x,y};
+function updateStats() {
+  let count=0;
+  for(let i=0;i<TOTAL;i++) {
+    if(land[i]===0) count++;
   }
- }
- return {x:WORLD/2,y:WORLD/2};
-}
 
-function makePlayer(id,x,y){
- return {
-  id,
-  name:NAMES[id],
-  x,y,
-  angle:Math.random()*Math.PI*2,
-  speed:id===0?PLAYER_SPEED:BOT_SPEED,
-  alive:true,
-  trail:[],
-  trailDistance:0,
-  paidTrailCoins:0,
-  aiTimer:0
- };
-}
+  const percent=(count/TOTAL*100);
+  document.getElementById("land").textContent=percent.toFixed(1)+"%";
 
-function createStartingLand(p){
- const centre=cellAt(p.x,p.y);
- for(let gx=centre.x-3;gx<=centre.x+3;gx++){
-  for(let gy=centre.y-3;gy<=centre.y+3;gy++){
-   const x=gx*CELL+CELL/2;
-   const y=gy*CELL+CELL/2;
-   if(insideIsland(x,y))setLand(gx,gy,p.id);
+  while(level<=TARGETS.length && percent>=TARGETS[level-1]) {
+    level++;
   }
- }
+
+  document.getElementById("level").textContent=level;
+  document.getElementById("levelBar").textContent =
+    level<=TARGETS.length
+    ? "NEXT LEVEL: "+TARGETS[level-1]+"% LAND"
+    : "MAX LEVEL REACHED";
+
+  const scores=players.map(p=>p.score).sort((a,b)=>b-a);
+  document.getElementById("rank").textContent =
+    scores.indexOf(player.score)+1;
 }
 
-/* ---------------- START / END ---------------- */
+function capture() {
+  if(trail.length===0) return;
 
-function startGame(){
- land.clear();
- players=[];
- coins=0;
- kills=0;
- level=1;
- totalTrailDistance=0;
- pointer=null;
+  // Mark the player's trail as territory.
+  trail.forEach(i=>land[i]=0);
 
- const centre=WORLD/2;
- players.push(makePlayer(0,centre,centre));
+  // Find empty areas connected to the outside.
+  const seen=new Uint8Array(TOTAL);
+  const queue=new Int32Array(TOTAL);
+  let head=0,tail=0;
 
- for(let i=1;i<8;i++){
-  const pos=randomPosition();
-  players.push(makePlayer(i,pos.x,pos.y));
- }
-
- for(const p of players)createStartingLand(p);
-
- document.getElementById("lobby").style.display="none";
- document.getElementById("end").style.display="none";
- document.getElementById("hud").style.display="flex";
- document.getElementById("mini").style.display="block";
- document.getElementById("help").style.display="block";
-
- running=true;
- previousTime=performance.now();
- requestAnimationFrame(gameLoop);
-}
-
-function showLobby(){
- running=false;
- pointer=null;
- document.getElementById("end").style.display="none";
- document.getElementById("lobby").style.display="flex";
-}
-
-function endGame(won,message){
- if(!running)return;
- running=false;
- document.getElementById("endTitle").textContent=won?"🏆 YOU WIN!":"GAME OVER";
- document.getElementById("endText").textContent=message;
- document.getElementById("end").style.display="flex";
-}
-
-function showHint(message){
- lastMessage=message;
- document.getElementById("help").textContent=message;
-}
-
-/* ---------------- TRAIL DISTANCE AND COINS ---------------- */
-
-/*
-Coins are earned while drawing an exposed trail.
-Every 1,000 game-distance units gives 10 coins.
-The distance display shows the current open trail length.
-*/
-
-function addTrailDistance(p,distance){
- p.trailDistance+=distance;
-
- if(p.id===0){
-  totalTrailDistance+=distance;
-
-  const newCoinTotal=Math.floor(
-   p.trailDistance/KM_UNITS*COINS_PER_KM
-  );
-
-  const earned=newCoinTotal-p.paidTrailCoins;
-  if(earned>0){
-   coins+=earned;
-   p.paidTrailCoins=newCoinTotal;
+  function add(i) {
+    if(i<0 || i>=TOTAL || seen[i] || land[i]===0) return;
+    seen[i]=1;
+    queue[tail++]=i;
   }
- }
-}
 
-/* ---------------- CAPTURE EXACT TRAIL SHAPE ---------------- */
+  for(let x=0;x<SIZE;x++) {
+    add(index(x,0));
+    add(index(x,SIZE-1));
+  }
+  for(let y=0;y<SIZE;y++) {
+    add(index(0,y));
+    add(index(SIZE-1,y));
+  }
 
-function pointInPolygon(x,y,polygon){
- let inside=false;
+  while(head<tail) {
+    const i=queue[head++];
+    const x=i%SIZE;
+    const y=Math.floor(i/SIZE);
 
- for(let i=0,j=polygon.length-1;i<polygon.length;j=i++){
-  const a=polygon[i];
-  const b=polygon[j];
+    if(x>0) add(i-1);
+    if(x<SIZE-1) add(i+1);
+    if(y>0) add(i-SIZE);
+    if(y<SIZE-1) add(i+SIZE);
+  }
 
-  const crosses=
-   ((a.y>y)!==(b.y>y)) &&
-   (x<(b.x-a.x)*(y-a.y)/(b.y-a.y)+a.x);
-
-  if(crosses)inside=!inside;
- }
- return inside;
-}
-
-function captureShape(p){
- if(p.trail.length<3){
-  p.trail=[];
-  p.trailDistance=0;
-  p.paidTrailCoins=0;
-  return;
- }
-
- const polygon=p.trail.slice();
- polygon.push({x:p.x,y:p.y});
-
- let minX=WORLD,maxX=0,minY=WORLD,maxY=0;
-
- for(const point of polygon){
-  minX=Math.min(minX,point.x);
-  maxX=Math.max(maxX,point.x);
-  minY=Math.min(minY,point.y);
-  maxY=Math.max(maxY,point.y);
- }
-
- const left=Math.max(0,Math.floor(minX/CELL));
- const right=Math.min(WORLD/CELL-1,Math.floor(maxX/CELL));
- const top=Math.max(0,Math.floor(minY/CELL));
- const bottom=Math.min(WORLD/CELL-1,Math.floor(maxY/CELL));
-
- let captured=0;
-
- for(let gx=left;gx<=right;gx++){
-  for(let gy=top;gy<=bottom;gy++){
-   const centreX=gx*CELL+CELL/2;
-   const centreY=gy*CELL+CELL/2;
-
-   if(!insideIsland(centreX,centreY))continue;
-
-   if(pointInPolygon(centreX,centreY,polygon)){
-    if(land.get(cellKey(gx,gy))!==p.id){
-     setLand(gx,gy,p.id);
-     captured++;
+  // Capture areas that are enclosed by the trail.
+  for(let i=0;i<TOTAL;i++) {
+    if(!seen[i] && land[i]!==0) {
+      land[i]=0;
     }
-   }
   }
- }
 
- if(p.id===0){
-  showHint("Shape captured! "+captured+" land cells");
- }
-
- p.trail=[];
- p.trailDistance=0;
- p.paidTrailCoins=0;
+  player.score=land.reduce((n,v)=>n+(v===0?1:0),0);
+  trail=[];
+  player.trail=[];
+  updateStats();
 }
 
-/* ---------------- ELIMINATION AND COLLISIONS ---------------- */
+function respawn(p) {
+  p.alive=false;
+  p.trail.forEach(i=>{
+    if(land[i]===p.id) land[i]=EMPTY;
+  });
 
-/*
-RULE:
-If player A touches player B's trail:
-B is eliminated. A survives and receives B's land.
-
-If player B touches player A's trail:
-A is eliminated. B survives and receives A's land.
-*/
-
-function eliminate(victim,killer){
- if(!victim.alive||!killer.alive)return;
-
- victim.alive=false;
- victim.trail=[];
- victim.trailDistance=0;
-
- for(const [key,owner] of land){
-  if(owner===victim.id){
-   land.set(key,killer.id);
+  p.trail=[];
+  if(p.id===0) {
+    running=false;
+    document.getElementById("messageTitle").textContent="YOU LOST!";
+    document.getElementById("message").style.display="block";
+    return;
   }
- }
 
- if(killer.id===0){
-  kills++;
-  showHint("Rival eliminated! Their land is yours.");
- }
-
- if(victim.id===0){
-  endGame(false,"A rival touched your exposed trail. Your land went to the rival.");
-  return;
- }
-
- const survivors=players.filter(p=>p.alive);
- if(survivors.length===1&&survivors[0].id===0){
-  endGame(true,"You defeated all the rivals!");
- }
+  setTimeout(()=>{
+    if(!running) return;
+    p.x=300+Math.random()*1400;
+    p.y=300+Math.random()*1400;
+    const c=cellAt(p.x,p.y);
+    claimHome(p.id,c.x,c.y);
+    p.alive=true;
+  },1000);
 }
 
-function touchesTrail(player,trail){
- for(const point of trail){
-  if(Math.hypot(player.x-point.x,player.y-point.y)<TRAIL_HIT_RADIUS){
-   return true;
+function movePlayer(p) {
+  if(!p.alive) return;
+
+  p.x+=p.dx*2.7;
+  p.y+=p.dy*2.7;
+
+  p.x=Math.max(CELL,Math.min(SIZE*CELL-CELL,p.x));
+  p.y=Math.max(CELL,Math.min(SIZE*CELL-CELL,p.y));
+
+  const c=cellAt(p.x,p.y);
+  if(!inside(c.x,c.y)) return;
+
+  const i=index(c.x,c.y);
+  const owner=land[i];
+
+  if(p.id===0) {
+    if(owner!==0 && !p.trail.includes(i)) {
+      if(owner!==EMPTY) {
+        respawn(p);
+        return;
+      }
+      land[i]=-2;
+      p.trail.push(i);
+      trail.push(i);
+    }
+
+    if(owner===0 && trail.length>2) {
+      capture();
+    }
+  } else {
+    if(owner===EMPTY) {
+      land[i]=p.id;
+      p.score++;
+    }
   }
- }
- return false;
 }
 
-function checkCombat(){
- const alive=players.filter(p=>p.alive);
+function moveBots() {
+  players.slice(1).forEach(p=>{
+    if(!p.alive) return;
 
- for(let i=0;i<alive.length;i++){
-  for(let j=i+1;j<alive.length;j++){
-   const a=alive[i];
-   const b=alive[j];
+    p.turn++;
+    if(p.turn>65+Math.random()*100) {
+      const angle=Math.random()*Math.PI*2;
+      p.dx=Math.cos(angle);
+      p.dy=Math.sin(angle);
+      p.turn=0;
+    }
 
-   if(!a.alive||!b.alive)continue;
-
-   // A's car touches B's trail: B dies.
-   if(touchesTrail(a,b.trail)){
-    eliminate(b,a);
-    if(!running)return;
-    continue;
-   }
-
-   // B's car touches A's trail: A dies.
-   if(touchesTrail(b,a.trail)){
-    eliminate(a,b);
-    if(!running)return;
-   }
-  }
- }
+    movePlayer(p);
+  });
 }
 
-/* ---------------- MOVEMENT ---------------- */
+function draw() {
+  const w=canvas.clientWidth;
+  const h=canvas.clientHeight;
 
-function steerPlayer(){
+  cameraX=player.x-w/2;
+  cameraY=player.y-h/2;
+
+  ctx.fillStyle="#142238";
+  ctx.fillRect(0,0,w,h);
+
+  const left=Math.max(0,Math.floor(cameraX/CELL));
+  const top=Math.max(0,Math.floor(cameraY/CELL));
+  const right=Math.min(SIZE,Math.ceil((cameraX+w)/CELL)+1);
+  const bottom=Math.min(SIZE,Math.ceil((cameraY+h)/CELL)+1);
+
+  for(let y=top;y<bottom;y++) {
+    for(let x=left;x<right;x++) {
+      const owner=land[index(x,y)];
+      if(owner>=0) {
+        ctx.fillStyle=COLORS[owner];
+        ctx.fillRect(
+          x*CELL-cameraX,
+          y*CELL-cameraY,
+          CELL+0.5,CELL+0.5
+        );
+      } else if(owner===-2) {
+        ctx.fillStyle="#baffed";
+        ctx.fillRect(
+          x*CELL-cameraX,
+          y*CELL-cameraY,
+          CELL,CELL
+        );
+      }
+    }
+  }
+
+  // World boundary.
+  ctx.strokeStyle="#ffffff44";
+  ctx.lineWidth=3;
+  ctx.strokeRect(-cameraX,-cameraY,SIZE*CELL,SIZE*CELL);
+
+  players.forEach(p=>{
+    if(!p.alive) return;
+    const x=p.x-cameraX;
+    const y=p.y-cameraY;
+
+    ctx.beginPath();
+    ctx.arc(x,y,p.id===0?10:8,0,Math.PI*2);
+    ctx.fillStyle=COLORS[p.id];
+    ctx.fill();
+    ctx.strokeStyle="white";
+    ctx.lineWidth=2;
+    ctx.stroke();
+
+    if(p.id===0) {
+      ctx.fillStyle="white";
+      ctx.font="bold 11px Arial";
+      ctx.textAlign="center";
+      ctx.fillText("YOU",x,y-15);
+    }
+  });
+
+  drawMini();
+}
+
+function drawMini() {
+  const scale=230/(SIZE*CELL);
+  mctx.fillStyle="#17243a";
+  mctx.fillRect(0,0,230,230);
+
+  for(let y=0;y<SIZE;y++) {
+    for(let x=0;x<SIZE;x++) {
+      const owner=land[index(x,y)];
+      if(owner>=0) {
+        mctx.fillStyle=COLORS[owner];
+        mctx.fillRect(
+          x*CELL*scale,y*CELL*scale,
+          CELL*scale+0.5,CELL*scale+0.5
+        );
+      }
+    }
+  }
+
+  players.forEach(p=>{
+    if(!p.alive) return;
+    mctx.beginPath();
+    mctx.arc(p.x*scale,p.y*scale,3,0,Math.PI*2);
+    mctx.fillStyle="white";
+    mctx.fill();
+  });
+}
+
+function loop(time) {
+  if(!running) return;
+  const elapsed=Math.min(time-lastTime,40);
+  lastTime=time;
+
+  frame++;
+  movePlayer(player);
+  if(frame%2===0) moveBots();
+  draw();
+
+  requestAnimationFrame(loop);
+}
+
+// Drag steering.
+let touchStart=null;
+let pointerDown=false;
+
+canvas.addEventListener("pointerdown",e=>{
+  if(!running) return;
+  pointerDown=true;
+  touchStart={x:e.clientX,y:e.clientY};
+  canvas.setPointerCapture(e.pointerId);
+});
+
+canvas.addEventListener("pointermove",e=>{
+  if(!pointerDown || !touchStart || !running) return;
+
+  const dx=e.clientX-touchStart.x;
+  const dy=e.clientY-touchStart.y;
+  const distance=Math.hypot(dx,dy);
+
+  if(distance>8) {
+    player.dx=dx/distance;
+    player.dy=dy/distance;
+  }
+});
+
+function stopPointer() {
+  pointerDown=false;
+  touchStart=null;
+}
+canvas.addEventListener("pointerup",stopPointer);
+canvas.addEventListener("pointercancel",stopPointer);
+
+function startGame() {
+  document.getElementById("startScreen").style.display="none";
+  document.getElementById("gameScreen").style.display="block";
+  document.getElementById("message").style.display="none";
+
+  resize();
+  resetGame();
+  running=true;
+  lastTime=performance.now();
+  requestAnimationFrame(loop);
+}
+
+document.getElementById("startBtn").addEventListener("click",startGame);
+
+document.getElementById("restart").addEventListener("click",()=>{
+  running=false;
+  startGame();
+});
+
+document.getElementById("again").addEventListener("click",()=>{
+  running=false;
+  startGame();
+});
+
+})();
+</script>
+</body>
+</html>
+(){
  if(pointer===null)return;
 
  const p=players[0];
