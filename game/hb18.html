@@ -1,304 +1,401 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>HB Land 18</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#08121e;color:white;font-family:Arial;overflow:hidden;touch-action:none}
-button,select{border:0;border-radius:12px;padding:11px 15px;background:#50e6c0;color:#071522;font-weight:bold;font-size:14px}
-button:active{transform:scale(.97)}
-.screen{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,#23445c,#07111e);padding:18px;text-align:center}
+body{margin:0;background:#08111f;color:white;font-family:Arial,sans-serif;overflow:hidden;touch-action:none}
+.screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,#203a56,#08111f 75%);padding:20px;text-align:center;z-index:10}
 .hidden{display:none!important}
-.card{width:100%;max-width:430px;max-height:90vh;overflow:auto;background:#12243a;border:2px solid #50e6c0;border-radius:22px;padding:25px;box-shadow:0 0 30px #50e6c033}
-.logo{font-size:65px}
-h1{color:#50e6c0;font-size:34px;margin:10px}
-p{color:#c7d7e5;line-height:1.5}
-.actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:15px}
-#game{position:fixed;inset:0;background:#172b26}
-canvas{display:block;width:100%;height:100%;touch-action:none}
-#hud{position:absolute;top:0;left:0;right:0;z-index:2;background:#071522dd;padding:8px;display:flex;justify-content:space-around;align-items:center;font-size:11px;gap:4px}
-.stat{text-align:center}
-.stat b{display:block;color:#50e6c0;font-size:15px;margin-top:3px}
-#hud button{padding:8px;font-size:11px}
-#hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:#071522dd;padding:8px 13px;border-radius:20px;font-size:11px;white-space:nowrap;pointer-events:none}
-#panel{position:absolute;z-index:3;top:60px;left:8px;background:#071522dd;padding:8px;border-radius:10px;font-size:11px;line-height:1.6}
-#notice{position:absolute;inset:0;z-index:5;display:none;align-items:center;justify-content:center;background:#06101ddd;text-align:center;padding:20px}
-#notice .card{max-width:330px}
-#shopList button{margin:5px}
-#mapSelect{max-width:100%;background:#20364b;color:white}
+.card{width:100%;max-width:430px;padding:30px 22px;border:2px solid #50e6c0;border-radius:25px;background:#101e30;box-shadow:0 0 30px #50e6c044}
+.logo{font-size:75px;margin:5px}
+h1{font-size:38px;color:#50e6c0;margin:12px 0}
+h2{font-size:25px;margin:12px 0}
+p{color:#c6d5e4;line-height:1.5}
+button{border:0;border-radius:30px;background:#50e6c0;color:#071522;font-size:18px;font-weight:bold;padding:15px 35px;margin-top:20px;cursor:pointer}
+button:active{transform:scale(.97)}
+#gameScreen{position:fixed;inset:0;background:#0c1928}
+#topbar{height:58px;background:#101e30;display:flex;align-items:center;justify-content:space-around;font-size:12px;text-align:center;border-bottom:1px solid #29445a}
+.stat strong{display:block;color:#50e6c0;font-size:17px;margin-top:3px}
+#game{display:block;width:100%;height:calc(100% - 58px);touch-action:none}
+#mini{position:absolute;right:10px;top:68px;width:105px;height:105px;background:#07111d;border:2px solid #50e6c0;border-radius:9px}
+#board{position:absolute;left:10px;top:68px;background:#07111dcc;padding:8px 10px;border-radius:9px;font-size:11px;line-height:1.6;min-width:95px}
+#hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:#07111dcc;padding:8px 13px;border-radius:20px;font-size:12px;white-space:nowrap;pointer-events:none}
+#restart{position:absolute;bottom:12px;left:10px;margin:0;padding:9px 13px;font-size:12px}
+#message{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#06101dcc;text-align:center;z-index:5}
+#message .card{max-width:300px}
 </style>
 </head>
 <body>
 
-<div class="screen" id="start">
- <div class="card">
-  <div class="logo">🦢</div>
-  <h1>HB LAND 18</h1>
-  <p>Welcome to the ultimate car territory challenge!</p>
-  <p>Drive freely. Capture land. Collect coins. Become champion.</p>
-  <button onclick="showWelcome()">START GAME</button>
- </div>
-</div>
-
-<div class="screen hidden" id="welcome">
- <div class="card">
-  <div class="logo">🦢</div>
-  <h1>WELCOME TO HB</h1>
-  <h2>HB LAND 18</h2>
-  <p>Choose your map and car. Your race begins now!</p>
-  <button onclick="showSetup()">PLAY NOW</button>
- </div>
-</div>
-
-<div class="screen hidden" id="setup">
- <div class="card">
-  <div class="logo">🏁</div>
-  <h1>RACE SETUP</h1>
-  <p>Choose your racing map:</p>
-  <select id="mapSelect">
-   <option value="0">Grand Prix Circuit</option>
-   <option value="1">Desert Raceway</option>
-   <option value="2">Green Valley Circuit</option>
-  </select>
-  <p id="coinPreview">Coins: 0</p>
-  <button onclick="openShop()">CAR SHOP</button>
-  <button onclick="beginGame()">START RACE</button>
- </div>
-</div>
-
-<div id="game" class="hidden">
- <canvas id="world"></canvas>
- <div id="hud">
-  <div class="stat">LAND<b id="land">0%</b></div>
-  <div class="stat">LEVEL<b id="level">1</b></div>
-  <div class="stat">COINS<b id="coins">0</b></div>
-  <div class="stat">DISTANCE<b id="distance">0 km</b></div>
-  <button onclick="openShop()">SHOP</button>
-  <button onclick="backToSetup()">MAP</button>
- </div>
- <div id="panel">🏁 HB LAND 18<br><span id="rank">Players: 8</span><br><span id="mapName">Grand Prix</span></div>
- <div id="hint">👆 Drag anywhere to steer your car</div>
- <div id="notice">
+<!-- SCREEN 1 -->
+<div class="screen" id="firstScreen">
   <div class="card">
-   <h1 id="noticeTitle">ELIMINATED</h1>
-   <p id="noticeText"></p>
-   <button onclick="backToSetup()">CONTINUE</button>
+    <div class="logo">🦢</div>
+    <h1>HB LAND 18</h1>
+    <p>Welcome to the world of HB!</p>
+    <p>Capture land. Beat your rivals. Become the champion.</p>
+    <button onclick="showWelcome()">START GAME</button>
   </div>
- </div>
 </div>
 
-<div class="screen hidden" id="shop">
- <div class="card">
-  <h1>🏎️ CAR SHOP</h1>
-  <p id="shopCoins">Your coins: 0</p>
-  <div id="shopList"></div>
-  <button onclick="closeShop()">BACK</button>
- </div>
+<!-- SCREEN 2 -->
+<div class="screen hidden" id="secondScreen">
+  <div class="card">
+    <div class="logo">🦢</div>
+    <h1>WELCOME TO HB</h1>
+    <h2>HB LAND 18</h2>
+    <p>8 players are ready. How much land can you capture?</p>
+    <button onclick="showFinalWelcome()">PLAY NOW</button>
+  </div>
+</div>
+
+<!-- SCREEN 3 -->
+<div class="screen hidden" id="thirdScreen">
+  <div class="card">
+    <div class="logo">🦢</div>
+    <h1>HB</h1>
+    <h2>WELCOME TO HB LAND 18</h2>
+    <p>Your land. Your challenge. Your victory.</p>
+    <button onclick="startGame()">PLAY NOW</button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="gameScreen" class="hidden">
+  <div id="topbar">
+    <div class="stat">LAND<strong id="landStat">0%</strong></div>
+    <div class="stat">LEVEL<strong id="levelStat">1</strong></div>
+    <div class="stat">RANK<strong id="rankStat">1/8</strong></div>
+    <div class="stat">PLAYERS<strong>8</strong></div>
+  </div>
+  <canvas id="game"></canvas>
+  <canvas id="mini"></canvas>
+  <div id="board"></div>
+  <button id="restart" onclick="restartGame()">RESTART</button>
+  <div id="hint">👆 Drag your finger to steer</div>
+  <div id="message">
+    <div class="card">
+      <h2 id="messageTitle">GAME OVER</h2>
+      <p id="messageText">Try again!</p>
+      <button onclick="restartGame()">PLAY AGAIN</button>
+    </div>
+  </div>
 </div>
 
 <script>
-"use strict";
-
-const $=id=>document.getElementById(id);
-const W=2000,H=1400,COLS=100,ROWS=70;
-const CELL=20;
+const WORLD=70;
 const EMPTY=-1;
-const colors=["#50e6c0","#ff5555","#ffc34d","#58aaff","#c17cff","#ff80ab","#a4e65a","#ff914d"];
-const names=["YOU","RED","GOLD","BLUE","PURPLE","PINK","LIME","ORANGE"];
+const COLORS=["#50e6c0","#ff5252","#ffc34d","#55aaff","#bd7cff","#ff80ab","#a5e65a","#ff914d"];
+const NAMES=["YOU","RED","GOLD","BLUE","PURPLE","PINK","LIME","ORANGE"];
+const TARGETS=[0,3,6,10,15,22,30,40,50,60,70,80];
 
-const cars=[
- {name:"HB Starter",price:0,color:"#50e6c0",speed:210},
- {name:"Red Racer",price:100,color:"#ff4444",speed:235},
- {name:"Blue Turbo",price:250,color:"#48aaff",speed:260},
- {name:"Golden GT",price:500,color:"#ffc34d",speed:280},
- {name:"Swan Hypercar",price:900,color:"#ffffff",speed:310}
-];
+let land,players,timer,level=1,gameRunning=false;
+let canvas,ctx,mini,mctx;
+let lastTurn=0;
 
-let wallet=Number(localStorage.getItem("hbCoins")||0);
-let owned=JSON.parse(localStorage.getItem("hbCars")||"[0]");
-let selected=Number(localStorage.getItem("hbSelected")||0);
-if(!owned.includes(0))owned.push(0);
-if(!owned.includes(selected))selected=0;
-
-let canvas=$("world"),ctx=canvas.getContext("2d");
-let land,players,active=false,lastTime=0;
-let camera={x:W/2,y:H/2};
-let totalDistance=0,coinDistance=0,level=1,bonusPaid=false;
-let currentMap=0;
-let pointer=null,keys={};
-let worldScale=1;
-
-const maps=[
- {name:"Grand Prix Circuit",bg:"#22543a",road:"#303943",edge:"#e7e9e9",stripe:"#f5f5f5",curve:0},
- {name:"Desert Raceway",bg:"#92734a",road:"#403b38",edge:"#e6c58b",stripe:"#fff0d4",curve:1},
- {name:"Green Valley Circuit",bg:"#286044",road:"#34434a",edge:"#d7e4dc",stripe:"#ffffff",curve:2}
-];
-
-function saveWallet(){
- localStorage.setItem("hbCoins",String(wallet));
- localStorage.setItem("hbCars",JSON.stringify(owned));
- localStorage.setItem("hbSelected",String(selected));
+function showWelcome(){
+  document.getElementById("firstScreen").classList.add("hidden");
+  document.getElementById("secondScreen").classList.remove("hidden");
+}
+function showFinalWelcome(){
+  document.getElementById("secondScreen").classList.add("hidden");
+  document.getElementById("thirdScreen").classList.remove("hidden");
 }
 
-function showScreen(id){
- ["start","welcome","setup","shop"].forEach(s=>$(s).classList.add("hidden"));
- $("game").classList.add("hidden");
- $(id).classList.remove("hidden");
-}
-function showWelcome(){showScreen("welcome")}
-function showSetup(){
- showScreen("setup");
- $("coinPreview").textContent="Coins: "+wallet;
-}
-function backToSetup(){
- active=false;
- showScreen("setup");
- $("coinPreview").textContent="Coins: "+wallet;
-}
-function openShop(){
- active=false;
- showScreen("shop");
- drawShop();
-}
-function closeShop(){
- showScreen("setup");
- $("coinPreview").textContent="Coins: "+wallet;
-}
-function drawShop(){
- $("shopCoins").textContent="Your coins: "+wallet;
- $("shopList").innerHTML="";
- cars.forEach((car,i)=>{
-  const ownedCar=owned.includes(i);
-  const b=document.createElement("button");
-  b.textContent=car.name+" - "+(ownedCar?"OWNED":car.price+" coins")+(selected===i?" ✓":"");
-  b.style.background=car.color;
-  b.style.color="#071522";
-  b.onclick=()=>buyCar(i);
-  $("shopList").appendChild(b);
- });
-}
-function buyCar(i){
- if(owned.includes(i)){
-  selected=i;
- }else if(wallet>=cars[i].price){
-  wallet-=cars[i].price;
-  owned.push(i);
-  selected=i;
- }else{
-  alert("Not enough coins! Drive more to earn coins.");
-  return;
- }
- saveWallet();
- drawShop();
-}
+function index(x,y){return y*WORLD+x}
+function inside(x,y){return x>=0&&y>=0&&x<WORLD&&y<WORLD}
+function getLand(x,y){return inside(x,y)?land[index(x,y)]:EMPTY}
 
-function resize(){
- const dpr=Math.min(devicePixelRatio||1,2);
- canvas.width=innerWidth*dpr;
- canvas.height=innerHeight*dpr;
- ctx.setTransform(dpr,0,0,dpr,0,0);
+function makePlayer(id,x,y){
+  return {
+    id,x,y,dir:{x:id%2===0?1:-1,y:0},
+    trail:[],alive:true,score:0,respawn:0,
+    color:COLORS[id],name:NAMES[id],homeX:x,homeY:y
+  };
 }
-addEventListener("resize",resize);
-resize();
-
-function cellAt(x,y){
- const cx=Math.floor(x/CELL),cy=Math.floor(y/CELL);
- if(cx<0||cy<0||cx>=COLS||cy>=ROWS)return -2;
- return cy*COLS+cx;
-}
-function ownerAt(x,y){
- const k=cellAt(x,y);
- return k<0?-2:land[k];
-}
-function paintArea(id,x,y,r){
- const minX=Math.max(0,Math.floor((x-r)/CELL));
- const maxX=Math.min(COLS-1,Math.floor((x+r)/CELL));
- const minY=Math.max(0,Math.floor((y-r)/CELL));
- const maxY=Math.min(ROWS-1,Math.floor((y+r)/CELL));
- for(let cy=minY;cy<=maxY;cy++){
-  for(let cx=minX;cx<=maxX;cx++){
-   const px=(cx+.5)*CELL,py=(cy+.5)*CELL;
-   if(Math.hypot(px-x,py-y)<r)land[cy*COLS+cx]=id;
+function paintHome(p){
+  for(let y=p.y-3;y<=p.y+3;y++){
+    for(let x=p.x-3;x<=p.x+3;x++){
+      if(inside(x,y))land[index(x,y)]=p.id;
+    }
   }
- }
 }
-function countLand(id){
- let n=0;
- for(let i=0;i<land.length;i++)if(land[i]===id)n++;
- return n;
-}
-function makePlayer(id,x,y,angle){
- return {id,x,y,angle,speed:0,alive:true,trail:[],distance:0,paidKm:0,color:colors[id],name:names[id],turn:0};
-}
-function resetGame(){
- land=new Int8Array(COLS*ROWS);
- land.fill(EMPTY);
- players=[
-  makePlayer(0,1000,700,0),
-  makePlayer(1,260,250,0.4),
-  makePlayer(2,1700,250,2.1),
-  makePlayer(3,260,1150,-.5),
-  makePlayer(4,1700,1150,3.2),
-  makePlayer(5,1000,260,1.4),
-  makePlayer(6,300,700,0.8),
-  makePlayer(7,1700,700,2.8)
- ];
- players.forEach(p=>paintArea(p.id,p.x,p.y,85));
- totalDistance=0;coinDistance=0;level=1;bonusPaid=false;
- camera.x=players[0].x;camera.y=players[0].y;
-}
-function beginGame(){
- currentMap=Number($("mapSelect").value);
- resetGame();
- showScreen("game");
- resize();
- active=true;
- lastTime=performance.now();
- requestAnimationFrame(loop);
+function resetWorld(){
+  land=new Int8Array(WORLD*WORLD);
+  land.fill(EMPTY);
+  players=[
+    makePlayer(0,35,35),
+    makePlayer(1,10,10),
+    makePlayer(2,59,10),
+    makePlayer(3,10,59),
+    makePlayer(4,59,59),
+    makePlayer(5,35,10),
+    makePlayer(6,10,35),
+    makePlayer(7,59,35)
+  ];
+  players.forEach(p=>paintHome(p));
+  level=1;
 }
 
-function mapPath(){
- ctx.beginPath();
- const v=maps[currentMap].curve;
- if(v===0){
-  ctx.moveTo(270,400);ctx.bezierCurveTo(250,170,600,130,950,190);
-  ctx.bezierCurveTo(1350,100,1740,230,1740,520);
-  ctx.bezierCurveTo(1850,850,1600,1130,1250,1080);
-  ctx.bezierCurveTo(850,1200,450,1100,350,850);
-  ctx.bezierCurveTo(180,700,180,520,270,400);
- }else if(v===1){
-  ctx.moveTo(180,500);ctx.bezierCurveTo(400,120,700,300,950,220);
-  ctx.bezierCurveTo(1400,100,1830,300,1700,620);
-  ctx.bezierCurveTo(1600,900,1850,1080,1400,1140);
-  ctx.bezierCurveTo(900,1280,700,930,420,1050);
-  ctx.bezierCurveTo(130,1110,80,750,180,500);
- }else{
-  ctx.moveTo(250,450);ctx.bezierCurveTo(400,150,700,120,850,330);
-  ctx.bezierCurveTo(1000,480,1350,100,1620,330);
-  ctx.bezierCurveTo(1890,550,1690,800,1450,850);
-  ctx.bezierCurveTo(1200,900,1500,1200,1100,1180);
-  ctx.bezierCurveTo(700,1160,700,850,430,900);
-  ctx.bezierCurveTo(150,950,80,650,250,450);
- }
- ctx.closePath();
+function startGame(){
+  document.getElementById("thirdScreen").classList.add("hidden");
+  document.getElementById("gameScreen").classList.remove("hidden");
+  canvas=document.getElementById("game");
+  ctx=canvas.getContext("2d");
+  mini=document.getElementById("mini");
+  mctx=mini.getContext("2d");
+  resize();
+  resetWorld();
+  gameRunning=true;
+  clearInterval(timer);
+  timer=setInterval(tick,135);
+  draw();
 }
-function drawWorld(){
- const w=innerWidth,h=innerHeight;
- const scale=Math.min(w/850,h/620);
- worldScale=scale;
- ctx.fillStyle=maps[currentMap].bg;
- ctx.fillRect(0,0,w,h);
- ctx.save();
- ctx.translate(w/2-camera.x*scale,h/2-camera.y*scale);
- ctx.scale(scale,scale);
+function resize(){
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  canvas.width=canvas.clientWidth*dpr;
+  canvas.height=canvas.clientHeight*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  mini.width=210;mini.height=210;
+}
+window.addEventListener("resize",()=>{if(gameRunning){resize();draw()}});
 
- ctx.fillStyle="#ffffff12";
- for(let x=0;x<W;x+=100){
-  for(let y=0;y<H;y+=100){
-   ctx.beginPath();ctx.arc(x,y,2,0,7);ctx.fill();
+function restartGame(){
+  document.getElementById("message").style.display="none";
+  resetWorld();
+  gameRunning=true;
+  clearInterval(timer);
+  timer=setInterval(tick,135);
+  draw();
+}
+
+function chooseDirection(dx,dy){
+  const p=players[0];
+  if(!p||!p.alive)return;
+  if(Math.abs(dx)>Math.abs(dy)){
+    if(dx>0&&p.dir.x!==-1)p.dir={x:1,y:0};
+    if(dx<0&&p.dir.x!==1)p.dir={x:-1,y:0};
+  }else{
+    if(dy>0&&p.dir.y!==-1)p.dir={x:0,y:1};
+    if(dy<0&&p.dir.y!==1)p.dir={x:0,y:-1};
+  }
+}
+let pointerStart=null;
+canvasPointerSetup();
+function canvasPointerSetup(){
+  document.addEventListener("pointerdown",e=>{
+    if(!gameRunning||!canvas)return;
+    if(e.target!==canvas)return;
+    pointerStart={x:e.clientX,y:e.clientY};
+  });
+  document.addEventListener("pointermove",e=>{
+    if(!pointerStart||!gameRunning)return;
+    const dx=e.clientX-pointerStart.x;
+    const dy=e.clientY-pointerStart.y;
+    if(Math.abs(dx)+Math.abs(dy)>18){
+      chooseDirection(dx,dy);
+      pointerStart={x:e.clientX,y:e.clientY};
+    }
+  });
+  document.addEventListener("pointerup",()=>pointerStart=null);
+  document.addEventListener("pointercancel",()=>pointerStart=null);
+}
+
+function randomTurn(p){
+  if(Math.random()<0.16){
+    const dirs=[{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
+    const possible=dirs.filter(d=>!(d.x===-p.dir.x&&d.y===-p.dir.y));
+    p.dir=possible[Math.floor(Math.random()*possible.length)];
+  }
+}
+
+function killPlayer(victim,killer){
+  if(!victim.alive)return;
+  victim.alive=false;
+  victim.trail.forEach(c=>{if(getLand(c.x,c.y)===victim.id)land[index(c.x,c.y)]=EMPTY});
+  victim.trail=[];
+  for(let i=0;i<land.length;i++){
+    if(land[i]===victim.id)land[i]=killer?killer.id:EMPTY;
+  }
+  victim.respawn=Date.now()+1500;
+  if(victim.id===0){
+    gameRunning=false;
+    clearInterval(timer);
+    document.getElementById("messageTitle").textContent="YOU WERE CAUGHT!";
+    document.getElementById("messageText").textContent="Your land was taken. Try again and capture more territory!";
+    document.getElementById("message").style.display="flex";
+  }
+}
+
+function capture(p){
+  p.trail.forEach(c=>land[index(c.x,c.y)]=p.id);
+  p.trail=[];
+  const seen=new Uint8Array(WORLD*WORLD);
+  const queue=[];
+  function add(x,y){
+    if(!inside(x,y))return;
+    const k=index(x,y);
+    if(seen[k]||land[k]===p.id)return;
+    seen[k]=1;
+    queue.push(k);
+  }
+  for(let x=0;x<WORLD;x++){add(x,0);add(x,WORLD-1)}
+  for(let y=0;y<WORLD;y++){add(0,y);add(WORLD-1,y)}
+  for(let q=0;q<queue.length;q++){
+    const k=queue[q],x=k%WORLD,y=Math.floor(k/WORLD);
+    add(x+1,y);add(x-1,y);add(x,y+1);add(x,y-1);
+  }
+  for(let i=0;i<land.length;i++){
+    if(!seen[i]&&land[i]===EMPTY)land[i]=p.id;
+  }
+}
+
+function movePlayer(p){
+  if(!p.alive)return;
+  const nx=p.x+p.dir.x,ny=p.y+p.dir.y;
+  if(!inside(nx,ny)){
+    p.dir={x:-p.dir.x,y:-p.dir.y};
+    return;
+  }
+  p.x=nx;p.y=ny;
+  const owner=getLand(nx,ny);
+
+  if(owner===p.id){
+    if(p.trail.length)capture(p);
+  }else{
+    p.trail.push({x:nx,y:ny});
+  }
+
+  for(const other of players){
+    if(other.id===p.id||!other.alive)continue;
+    if(other.trail.some(c=>c.x===p.x&&c.y===p.y)){
+      killPlayer(other,p);
+    }
+  }
+
+  if(owner!==p.id&&owner!==EMPTY){
+    // Opponent territory is safe to enter.
+  }
+}
+
+function respawn(p){
+  for(let tries=0;tries<300;tries++){
+    const x=5+Math.floor(Math.random()*(WORLD-10));
+    const y=5+Math.floor(Math.random()*(WORLD-10));
+    const far=players.every(o=>o.id===p.id||!o.alive||Math.abs(o.x-x)+Math.abs(o.y-y)>12);
+    if(far&&getLand(x,y)===EMPTY){
+      p.x=x;p.y=y;p.dir={x:1,y:0};p.alive=true;
+      paintHome(p);
+      return;
+    }
+  }
+  p.x=35;p.y=35;p.alive=true;paintHome(p);
+}
+
+function tick(){
+  if(!gameRunning)return;
+  for(const p of players){
+    if(!p.alive){
+      if(p.id!==0&&Date.now()>p.respawn)respawn(p);
+      continue;
+    }
+    if(p.id!==0)randomTurn(p);
+    movePlayer(p);
+  }
+  updateStats();
+  draw();
+}
+
+function updateStats(){
+  const counts=players.map(p=>land.reduce((n,v)=>n+(v===p.id?1:0),0));
+  const total=counts[0];
+  const percent=Math.floor(total/(WORLD*WORLD)*100);
+  document.getElementById("landStat").textContent=percent+"%";
+  let newLevel=1;
+  for(let i=1;i<TARGETS.length;i++)if(percent>=TARGETS[i])newLevel=i+1;
+  level=Math.max(level,newLevel);
+  document.getElementById("levelStat").textContent=level;
+  const rank=1+counts.filter(v=>v>total).length;
+  document.getElementById("rankStat").textContent=rank+"/8";
+  const sorted=players.map((p,i)=>({name:p.name,count:counts[i],color:p.color}))
+    .sort((a,b)=>b.count-a.count);
+  document.getElementById("board").innerHTML=
+    "<b>LEADERBOARD</b><br>"+
+    sorted.map((p,i)=>`<span style="color:${p.color}">${i+1}. ${p.name} ${Math.floor(p.count/(WORLD*WORLD)*100)}%</span>`).join("<br>");
+}
+
+function draw(){
+  if(!ctx)return;
+  const w=canvas.clientWidth,h=canvas.clientHeight;
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle="#12263a";ctx.fillRect(0,0,w,h);
+  const p=players[0];
+  const cell=Math.max(7,Math.min(13,Math.min(w,h)/19));
+  const cols=Math.ceil(w/cell)+2,rows=Math.ceil(h/cell)+2;
+  const left=Math.max(0,Math.min(WORLD-cols,p.x-Math.floor(cols/2)));
+  const top=Math.max(0,Math.min(WORLD-rows,p.y-Math.floor(rows/2)));
+  const ox=(w-(cols*cell))/2,oy=(h-(rows*cell))/2;
+
+  for(let sy=0;sy<rows;sy++){
+    for(let sx=0;sx<cols;sx++){
+      const x=left+sx,y=top+sy;
+      if(!inside(x,y))continue;
+      const owner=getLand(x,y);
+      if(owner!==EMPTY){
+        ctx.fillStyle=COLORS[owner];
+        ctx.fillRect(ox+sx*cell,oy+sy*cell,cell+.5,cell+.5);
+      }
+    }
+  }
+
+  for(const player of players){
+    if(!player.alive)continue;
+    player.trail.forEach(c=>{
+      const sx=c.x-left,sy=c.y-top;
+      if(sx>=0&&sy>=0&&sx<cols&&sy<rows){
+        ctx.fillStyle=player.color;
+        ctx.fillRect(ox+sx*cell,oy+sy*cell,cell,cell);
+      }
+    });
+    const sx=player.x-left,sy=player.y-top;
+    if(sx>=0&&sy>=0&&sx<cols&&sy<rows){
+      ctx.beginPath();
+      ctx.arc(ox+(sx+.5)*cell,oy+(sy+.5)*cell,cell*.42,0,Math.PI*2);
+      ctx.fillStyle="#ffffff";ctx.fill();
+      ctx.beginPath();
+      ctx.arc(ox+(sx+.5)*cell,oy+(sy+.5)*cell,cell*.30,0,Math.PI*2);
+      ctx.fillStyle=player.color;ctx.fill();
+    }
+  }
+
+  mctx.clearRect(0,0,210,210);
+  mctx.fillStyle="#07111d";mctx.fillRect(0,0,210,210);
+  const s=210/WORLD;
+  for(let y=0;y<WORLD;y++){
+    for(let x=0;x<WORLD;x++){
+      const owner=getLand(x,y);
+      if(owner!==EMPTY){
+        mctx.fillStyle=COLORS[owner];
+        mctx.fillRect(x*s,y*s,s+.3,s+.3);
+      }
+    }
+  }
+  players.forEach(player=>{
+    if(!player.alive)return;
+    mctx.fillStyle="#fff";
+    mctx.beginPath();
+    mctx.arc((player.x+.5)*s,(player.y+.5)*s,2.5,0,Math.PI*2);
+    mctx.fill();
+  });
+}
+
+updateStats();
+</script>
+</body>
+</html>nPath();ctx.arc(x,y,2,0,7);ctx.fill();
   }
  }
  // Racing circuit
