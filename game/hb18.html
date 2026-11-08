@@ -3,105 +3,109 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>HB Land 18</title>
 
 <style>
 *{box-sizing:border-box}
 html,body{
- margin:0;width:100%;height:100%;
- overflow:hidden;background:#101827;
- color:white;font-family:Arial,sans-serif;
- touch-action:none;
+ margin:0;width:100%;height:100%;overflow:hidden;
+ background:#101827;color:white;
+ font-family:Arial,sans-serif;touch-action:none
 }
-#startScreen{
- position:fixed;inset:0;z-index:10;
+.screen{
+ position:fixed;inset:0;
  display:flex;flex-direction:column;
  justify-content:center;align-items:center;
  text-align:center;
  background:radial-gradient(circle,#29435b,#101827 75%);
 }
-.logo{
- font-size:90px;color:#50e6c0;
- text-shadow:0 0 25px #50e6c0;
-}
-h1{font-size:36px;letter-spacing:4px}
-#startBtn{
- padding:17px 55px;margin-top:25px;
- border:0;border-radius:35px;
+#firstScreen{z-index:10}
+#welcomeScreen{display:none;z-index:9}
+.logo{font-size:85px}
+h1{font-size:36px;letter-spacing:4px;color:#50e6c0}
+.sub{font-size:18px;color:#d7e9ed}
+.action{
+ border:0;border-radius:25px;
+ padding:17px 48px;margin-top:25px;
  background:#50e6c0;color:#10202a;
- font-size:20px;font-weight:bold;
+ font-size:20px;font-weight:bold
 }
-#gameScreen{
- display:none;width:100%;height:100%;
-}
+#gameScreen{display:none;width:100%;height:100%}
 header{
  height:58px;background:#17243a;
  display:flex;align-items:center;
  justify-content:space-around;
- font-size:11px;font-weight:bold;
+ font-size:11px;font-weight:bold
 }
 header span{color:#50e6c0}
 #world{
- display:block;width:100%;
- height:calc(100% - 58px);
- touch-action:none;
+ display:block;width:100%;height:calc(100% - 58px);
+ touch-action:none
 }
 #mini{
- position:absolute;right:9px;top:68px;
- width:115px;height:115px;
- border:2px solid white;border-radius:7px;
- background:#17243a;
+ position:absolute;right:8px;top:68px;
+ width:110px;height:110px;
+ border:2px solid white;border-radius:6px
 }
 #board{
- position:absolute;left:9px;top:68px;
- background:#17243add;padding:8px;
- border-radius:8px;font-size:11px;
- line-height:1.7;
+ position:absolute;left:8px;top:68px;
+ background:#17243add;padding:7px;
+ border-radius:7px;font-size:10px;line-height:1.6
 }
 #levelBar{
- position:absolute;top:65px;left:50%;
+ position:absolute;top:64px;left:50%;
  transform:translateX(-50%);
- font-size:10px;white-space:nowrap;
+ font-size:10px;white-space:nowrap
 }
 #hint{
  position:absolute;bottom:12px;left:50%;
  transform:translateX(-50%);
  background:#17243acc;padding:8px 12px;
- border-radius:20px;font-size:11px;
- white-space:nowrap;
+ border-radius:20px;font-size:11px;white-space:nowrap
 }
 #restart{
- position:absolute;bottom:12px;left:9px;
- border:0;border-radius:20px;
- padding:10px 14px;background:#50e6c0;
- font-weight:bold;
+ position:absolute;bottom:12px;left:8px;
+ border:0;border-radius:20px;padding:10px 13px;
+ background:#50e6c0;font-weight:bold
 }
 #message{
  display:none;position:absolute;z-index:5;
- left:50%;top:45%;transform:translate(-50%,-50%);
+ top:45%;left:50%;transform:translate(-50%,-50%);
  background:#17243a;border:2px solid #50e6c0;
- padding:22px;border-radius:15px;
- text-align:center;width:85%;max-width:300px;
+ border-radius:15px;padding:22px;
+ width:85%;max-width:300px;text-align:center
 }
 #again{
- background:#50e6c0;border:0;
- padding:12px 25px;border-radius:20px;
- font-weight:bold;
+ border:0;border-radius:20px;
+ padding:12px 25px;background:#50e6c0;font-weight:bold
 }
 </style>
 </head>
 
 <body>
 
-<div id="startScreen">
+<!-- FIRST SCREEN -->
+<div id="firstScreen" class="screen">
  <div class="logo">🦢</div>
  <h1>HB LAND 18</h1>
- <p>Capture the land. Become the champion.</p>
- <button type="button" id="startBtn" onclick="startGame()">START GAME</button>
- <p>Drag your finger to steer</p>
+ <p class="sub">Welcome to HB</p>
+ <button class="action" id="startBtn">START GAME</button>
 </div>
 
+<!-- SECOND SCREEN -->
+<div id="welcomeScreen" class="screen">
+ <div class="logo">🦢</div>
+ <h1>HB LAND 18</h1>
+ <p class="sub">Build your land. Outsmart your rivals.</p>
+ <p class="sub">🏎️ 8 players · 🏝️ Territory battle</p>
+ <button class="action" id="playNow">PLAY NOW</button>
+ <p style="color:#b8d1e2;margin-top:30px">
+ Computer-controlled rivals
+ </p>
+</div>
+
+<!-- GAME SCREEN -->
 <div id="gameScreen">
  <header>
   <div>HB LAND 18</div>
@@ -111,28 +115,24 @@ header span{color:#50e6c0}
  </header>
 
  <canvas id="world"></canvas>
- <canvas id="mini" width="230" height="230"></canvas>
+ <canvas id="mini" width="220" height="220"></canvas>
 
- <div id="board">
-  <b>LEADERBOARD</b><br>
-  🟢 YOU<br>🔴 RED<br>🟡 GOLD<br>🔵 BLUE<br>🟣 PURPLE
- </div>
-
+ <div id="board"></div>
  <div id="levelBar">NEXT LEVEL: 3% LAND</div>
- <button type="button" id="restart" onclick="restartGame()">RESTART</button>
+ <button id="restart">RESTART</button>
  <div id="hint">👆 Drag your finger to steer</div>
 
  <div id="message">
   <h2 id="messageTitle">GAME OVER</h2>
   <p id="messageText">Try again!</p>
-  <button type="button" id="again" onclick="startGame()">PLAY AGAIN</button>
+  <button id="again">PLAY AGAIN</button>
  </div>
 </div>
 
 <script>
 "use strict";
 
-/* HB LAND 18 GAME SETTINGS */
+/* SETTINGS */
 
 const SIZE=120;
 const CELL=20;
@@ -140,14 +140,15 @@ const TOTAL=SIZE*SIZE;
 const EMPTY=-1;
 
 const COLORS=[
- "#20c9a5",
- "#ff5353",
- "#ffc34d",
- "#438cff",
- "#b17aff"
+ "#20c9a5","#ff5353","#ffc34d","#438cff",
+ "#b17aff","#ff7cbd","#9ed84c","#ff914d"
 ];
 
-const NAMES=["YOU","RED","GOLD","BLUE","PURPLE"];
+const NAMES=[
+ "YOU","RED","GOLD","BLUE",
+ "PURPLE","PINK","GREEN","ORANGE"
+];
+
 const TARGETS=[3,6,10,15,22,30,40,50,60,70,80];
 
 const canvas=document.getElementById("world");
@@ -158,44 +159,33 @@ const mctx=mini.getContext("2d");
 let land;
 let trailOwner;
 let players=[];
-let player=null;
+let player;
 let running=false;
 let level=1;
 let frame=0;
 let cameraX=0;
 let cameraY=0;
 let animationId=0;
-
 let pointerDown=false;
 let touchStart=null;
 
-/* MAP FUNCTIONS */
+/* HELPERS */
 
-function index(x,y){
- return y*SIZE+x;
-}
+function index(x,y){return y*SIZE+x}
 
 function inside(x,y){
  return x>=0&&y>=0&&x<SIZE&&y<SIZE;
 }
 
 function cellAt(x,y){
- return {
-  x:Math.floor(x/CELL),
-  y:Math.floor(y/CELL)
- };
+ return {x:Math.floor(x/CELL),y:Math.floor(y/CELL)};
 }
 
 function makePlayer(id,x,y){
  return {
-  id:id,
-  x:x,
-  y:y,
+  id,x,y,
   dx:id===0?1:(id%2?1:-1),
-  dy:0,
-  alive:true,
-  trail:[],
-  turn:0
+  dy:0,alive:true,trail:[],turn:0
  };
 }
 
@@ -211,7 +201,7 @@ function claimHome(id,cx,cy){
  }
 }
 
-/* RESET GAME */
+/* RESET */
 
 function resetGame(){
  land=new Int8Array(TOTAL);
@@ -225,10 +215,13 @@ function resetGame(){
   makePlayer(1,500,500),
   makePlayer(2,1900,500),
   makePlayer(3,500,1900),
-  makePlayer(4,1900,1900)
+  makePlayer(4,1900,1900),
+  makePlayer(5,1200,400),
+  makePlayer(6,400,1200),
+  makePlayer(7,2000,1200)
  ];
 
- players.forEach(function(p){
+ players.forEach(p=>{
   let c=cellAt(p.x,p.y);
   claimHome(p.id,c.x,c.y);
  });
@@ -239,52 +232,45 @@ function resetGame(){
  updateStats();
 }
 
-/* SCREEN SIZE */
+/* CANVAS SIZE */
 
 function resize(){
  let dpr=Math.min(window.devicePixelRatio||1,2);
-
  canvas.width=Math.floor(canvas.clientWidth*dpr);
  canvas.height=Math.floor(canvas.clientHeight*dpr);
-
  ctx.setTransform(dpr,0,0,dpr,0,0);
 }
 
-window.addEventListener("resize",function(){
- if(running){
-  resize();
-  draw();
- }
+window.addEventListener("resize",()=>{
+ if(running){resize();draw()}
 });
 
 /* GAME OVER */
 
-function endGame(title,message){
+function endGame(){
  if(!running)return;
-
  running=false;
  cancelAnimationFrame(animationId);
 
- document.getElementById("messageTitle").textContent=title;
- document.getElementById("messageText").textContent=message;
+ document.getElementById("messageTitle").textContent="GAME OVER";
+ document.getElementById("messageText").textContent=
+  "Your exposed trail was touched!";
  document.getElementById("message").style.display="block";
 }
 
-/* CLEAR A PLAYER'S TRAIL */
+/* REMOVE TRAIL */
 
 function clearTrail(p){
- p.trail.forEach(function(i){
-  if(trailOwner[i]===p.id){
-   trailOwner[i]=EMPTY;
-  }
+ p.trail.forEach(i=>{
+  if(trailOwner[i]===p.id)trailOwner[i]=EMPTY;
  });
  p.trail=[];
 }
 
-/* FIND RESPAWN LOCATION */
+/* RESPAWN */
 
 function findSpawn(){
- for(let tries=0;tries<2000;tries++){
+ for(let tries=0;tries<3000;tries++){
   let x=200+Math.random()*2000;
   let y=200+Math.random()*2000;
   let c=cellAt(x,y);
@@ -292,7 +278,9 @@ function findSpawn(){
 
   for(let yy=c.y-5;yy<=c.y+5;yy++){
    for(let xx=c.x-5;xx<=c.x+5;xx++){
-    if(!inside(xx,yy)||land[index(xx,yy)]!==EMPTY){
+    if(!inside(xx,yy)||
+       land[index(xx,yy)]!==EMPTY||
+       trailOwner[index(xx,yy)]!==EMPTY){
      safe=false;
      break;
     }
@@ -301,91 +289,78 @@ function findSpawn(){
   }
 
   if(safe){
-   let near=false;
-   players.forEach(function(other){
-    if(other.alive&&Math.hypot(other.x-x,other.y-y)<150){
-     near=true;
-    }
-   });
-
-   if(!near)return {x:x,y:y};
+   let near=players.some(other=>
+    other.alive&&Math.hypot(other.x-x,other.y-y)<150
+   );
+   if(!near)return {x,y};
   }
  }
 
  return {x:300+Math.random()*1800,y:300+Math.random()*1800};
 }
 
-/* PLAYER ELIMINATION */
+/* KILL PLAYER */
 
 function killPlayer(victim,killer){
  if(!victim.alive)return;
 
  clearTrail(victim);
 
- // Killer receives the victim's captured land.
+ // Killer receives the victim's land.
  for(let i=0;i<TOTAL;i++){
-  if(land[i]===victim.id){
-   land[i]=killer.id;
-  }
+  if(land[i]===victim.id)land[i]=killer.id;
  }
 
  victim.alive=false;
  updateStats();
 
  if(victim.id===0){
-  endGame("GAME OVER","Your exposed trail was touched!");
+  endGame();
   return;
  }
 
- if(killer.id===0){
-  setTimeout(function(){
-   if(!running)return;
+ setTimeout(()=>{
+  if(!running)return;
 
-   let spawn=findSpawn();
+  let spawn=findSpawn();
+  victim.x=spawn.x;
+  victim.y=spawn.y;
+  victim.dx=1;
+  victim.dy=0;
+  victim.turn=0;
+  victim.alive=true;
 
-   victim.x=spawn.x;
-   victim.y=spawn.y;
-   victim.dx=1;
-   victim.dy=0;
-   victim.alive=true;
-
-   let c=cellAt(victim.x,victim.y);
-   claimHome(victim.id,c.x,c.y);
-  },1000);
- }
+  let c=cellAt(victim.x,victim.y);
+  claimHome(victim.id,c.x,c.y);
+  updateStats();
+ },1200);
 }
 
-/* CAPTURE LAND */
+/* CAPTURE */
 
 function capture(p){
- if(p.trail.length===0)return;
+ if(!p.trail.length)return;
 
- // Turn the player's trail into safe land.
- p.trail.forEach(function(i){
+ p.trail.forEach(i=>{
   land[i]=p.id;
   trailOwner[i]=EMPTY;
  });
 
  const seen=new Uint8Array(TOTAL);
  const queue=new Int32Array(TOTAL);
-
- let head=0;
- let tail=0;
+ let head=0,tail=0;
 
  function add(i){
   if(i<0||i>=TOTAL||seen[i])return;
   if(land[i]!==EMPTY||trailOwner[i]!==EMPTY)return;
-
   seen[i]=1;
   queue[tail++]=i;
  }
 
- // Search empty areas connected to the map border.
  for(let x=0;x<SIZE;x++){
   add(index(x,0));
   add(index(x,SIZE-1));
  }
-
  for(let y=0;y<SIZE;y++){
   add(index(0,y));
   add(index(SIZE-1,y));
@@ -402,7 +377,6 @@ function capture(p){
   if(y<SIZE-1)add(i+SIZE);
  }
 
- // Empty areas not connected to the border are captured.
  for(let i=0;i<TOTAL;i++){
   if(land[i]===EMPTY&&trailOwner[i]===EMPTY&&!seen[i]){
    land[i]=p.id;
@@ -413,7 +387,7 @@ function capture(p){
  updateStats();
 }
 
-/* IMPORTANT TRAIL COLLISION RULE */
+/* TRAIL COLLISION */
 
 function checkTrailCollision(p,i){
  let owner=trailOwner[i];
@@ -423,8 +397,7 @@ function checkTrailCollision(p,i){
  let victim=players[owner];
 
  if(victim&&victim.alive){
-  // The owner of the touched trail dies.
-  // The player who touches it survives.
+  // The trail owner dies, not the player touching the trail.
   killPlayer(victim,p);
  }
 }
@@ -434,10 +407,8 @@ function checkTrailCollision(p,i){
 function movePlayer(p){
  if(!p.alive||!running)return;
 
- const speed=2.7;
-
- p.x+=p.dx*speed;
- p.y+=p.dy*speed;
+ p.x+=p.dx*2.7;
+ p.y+=p.dy*2.7;
 
  p.x=Math.max(CELL,Math.min(SIZE*CELL-CELL,p.x));
  p.y=Math.max(CELL,Math.min(SIZE*CELL-CELL,p.y));
@@ -447,42 +418,38 @@ function movePlayer(p){
 
  let i=index(c.x,c.y);
 
- // Check opponent's exposed line first.
+ // Check exposed opponent trail first.
  if(trailOwner[i]!==EMPTY&&trailOwner[i]!==p.id){
   checkTrailCollision(p,i);
  }
 
  if(!p.alive||!running)return;
 
- // Own territory: return safely and capture.
+ // Return to own land to finish capture.
  if(land[i]===p.id){
-  if(p.trail.length>0){
-   capture(p);
-  }
+  if(p.trail.length)capture(p);
   return;
  }
 
- // Any opponent's safe territory is harmless.
- if(land[i]>=0){
-  return;
- }
+ // Safe territory belonging to others.
+ if(land[i]>=0)return;
 
- // Make an exposed trail in empty land.
+ // Create exposed trail.
  if(land[i]===EMPTY&&trailOwner[i]===EMPTY){
   trailOwner[i]=p.id;
   p.trail.push(i);
  }
 }
 
-/* COMPUTER PLAYERS */
+/* COMPUTER RIVALS */
 
 function moveBots(){
- players.slice(1).forEach(function(p){
+ players.slice(1).forEach(p=>{
   if(!p.alive||!running)return;
 
   p.turn++;
 
-  if(p.turn>70+Math.random()*90){
+  if(p.turn>55+Math.random()*90){
    let angle=Math.random()*Math.PI*2;
    p.dx=Math.cos(angle);
    p.dy=Math.sin(angle);
@@ -493,19 +460,15 @@ function moveBots(){
  });
 }
 
-/* STATISTICS */
+/* STATS */
 
 function updateStats(){
  if(!land||!players.length)return;
 
- let counts=players.map(function(){
-  return 0;
- });
+ let counts=players.map(()=>0);
 
  for(let i=0;i<TOTAL;i++){
-  if(land[i]>=0){
-   counts[land[i]]++;
-  }
+  if(land[i]>=0)counts[land[i]]++;
  }
 
  let percent=counts[0]/TOTAL*100;
@@ -520,15 +483,229 @@ function updateStats(){
  document.getElementById("level").textContent=level;
 
  document.getElementById("levelBar").textContent=
-  level<=TARGETS.length
-  ?"NEXT LEVEL: "+TARGETS[level-1]+"% LAND"
-  :"MAX LEVEL REACHED";
+  level<=TARGETS.length?
+  "NEXT LEVEL: "+TARGETS[level-1]+"% LAND":
+  "MAX LEVEL REACHED";
 
- let sorted=counts.slice().sort(function(a,b){
-  return b-a;
+ let sorted=counts.slice().sort((a,b)=>b-a);
+ document.getElementById("rank").textContent=
+  sorted.indexOf(counts[0])+1;
+
+ let board=document.getElementById("board");
+ board.innerHTML="<b>LEADERBOARD</b><br>";
+
+ players.slice().sort((a,b)=>counts[b.id]-counts[a.id])
+ .forEach(p=>{
+  board.innerHTML+=
+   (p.alive?"":"<s>")+
+   COLORS[p.id]&&"";
+ });
+ 
+ board.innerHTML="<b>LEADERBOARD</b><br>";
+
+ players.slice().sort((a,b)=>counts[b.id]-counts[a.id])
+ .forEach(p=>{
+  board.innerHTML+=
+   (p.alive?"":"<s>")+
+   ["🟢","🔴","🟡","🔵","🟣","🩷","🟩","🟠"][p.id]+
+   " "+NAMES[p.id]+" "+
+   (counts[p.id]/TOTAL*100).toFixed(1)+"%"+
+   (p.alive?"":"</s>")+"<br>";
+ });
+}
+
+/* DRAW */
+
+function draw(){
+ if(!player)return;
+
+ let w=canvas.clientWidth;
+ let h=canvas.clientHeight;
+
+ cameraX=player.x-w/2;
+ cameraY=player.y-h/2;
+
+ ctx.fillStyle="#142238";
+ ctx.fillRect(0,0,w,h);
+
+ let left=Math.max(0,Math.floor(cameraX/CELL));
+ let top=Math.max(0,Math.floor(cameraY/CELL));
+ let right=Math.min(SIZE,Math.ceil((cameraX+w)/CELL)+1);
+ let bottom=Math.min(SIZE,Math.ceil((cameraY+h)/CELL)+1);
+
+ for(let y=top;y<bottom;y++){
+  for(let x=left;x<right;x++){
+   let i=index(x,y);
+   let owner=land[i];
+   let trail=trailOwner[i];
+
+   if(owner>=0){
+    ctx.fillStyle=COLORS[owner];
+    ctx.fillRect(x*CELL-cameraX,y*CELL-cameraY,CELL+0.5,CELL+0.5);
+   }else if(trail>=0){
+    ctx.fillStyle=COLORS[trail];
+    ctx.fillRect(x*CELL-cameraX,y*CELL-cameraY,CELL+0.5,CELL+0.5);
+    ctx.strokeStyle="white";
+    ctx.lineWidth=1;
+    ctx.strokeRect(x*CELL-cameraX+2,y*CELL-cameraY+2,CELL-4,CELL-4);
+   }
+  }
+ }
+
+ ctx.strokeStyle="#ffffff55";
+ ctx.lineWidth=3;
+ ctx.strokeRect(-cameraX,-cameraY,SIZE*CELL,SIZE*CELL);
+
+ players.forEach(p=>{
+  if(!p.alive)return;
+
+  let x=p.x-cameraX;
+  let y=p.y-cameraY;
+
+  ctx.beginPath();
+  ctx.arc(x,y,p.id===0?10:8,0,Math.PI*2);
+  ctx.fillStyle=COLORS[p.id];
+  ctx.fill();
+  ctx.strokeStyle="white";
+  ctx.lineWidth=2;
+  ctx.stroke();
+
+  if(p.id===0){
+   ctx.fillStyle="white";
+   ctx.font="bold 11px Arial";
+   ctx.textAlign="center";
+   ctx.fillText("YOU",x,y-15);
+  }
  });
 
- document.getElementById("rank").textContent=
+ drawMini();
+}
+
+/* MINIMAP */
+
+function drawMini(){
+ let scale=220/(SIZE*CELL);
+
+ mctx.fillStyle="#17243a";
+ mctx.fillRect(0,0,220,220);
+
+ for(let y=0;y<SIZE;y++){
+  for(let x=0;x<SIZE;x++){
+   let i=index(x,y);
+   let owner=land[i];
+   if(owner<0)owner=trailOwner[i];
+
+   if(owner>=0){
+    mctx.fillStyle=COLORS[owner];
+    mctx.fillRect(
+     x*CELL*scale,y*CELL*scale,
+     CELL*scale+0.5,CELL*scale+0.5
+    );
+   }
+  }
+ }
+
+ players.forEach(p=>{
+  if(!p.alive)return;
+  mctx.beginPath();
+  mctx.arc(p.x*scale,p.y*scale,4,0,Math.PI*2);
+  mctx.fillStyle="white";
+  mctx.fill();
+ });
+}
+
+/* GAME LOOP */
+
+function loop(){
+ if(!running)return;
+
+ movePlayer(player);
+ frame++;
+
+ if(frame%2===0)moveBots();
+
+ draw();
+
+ if(running)animationId=requestAnimationFrame(loop);
+}
+
+/* DRAG CONTROL */
+
+canvas.addEventListener("pointerdown",e=>{
+ if(!running)return;
+
+ pointerDown=true;
+ touchStart={x:e.clientX,y:e.clientY};
+
+ if(canvas.setPointerCapture){
+  canvas.setPointerCapture(e.pointerId);
+ }
+});
+
+canvas.addEventListener("pointermove",e=>{
+ if(!pointerDown||!touchStart||!running)return;
+
+ let dx=e.clientX-touchStart.x;
+ let dy=e.clientY-touchStart.y;
+ let distance=Math.hypot(dx,dy);
+
+ if(distance>8){
+  player.dx=dx/distance;
+  player.dy=dy/distance;
+ }
+});
+
+function stopPointer(){
+ pointerDown=false;
+ touchStart=null;
+}
+
+canvas.addEventListener("pointerup",stopPointer);
+canvas.addEventListener("pointercancel",stopPointer);
+
+/* THREE SCREEN BUTTON FLOW */
+
+function showWelcome(){
+ document.getElementById("firstScreen").style.display="none";
+ document.getElementById("welcomeScreen").style.display="flex";
+}
+
+function startGame(){
+ try{
+  cancelAnimationFrame(animationId);
+
+  document.getElementById("firstScreen").style.display="none";
+  document.getElementById("welcomeScreen").style.display="none";
+  document.getElementById("gameScreen").style.display="block";
+  document.getElementById("message").style.display="none";
+
+  resize();
+  resetGame();
+
+  running=true;
+  draw();
+
+  animationId=requestAnimationFrame(loop);
+
+ }catch(error){
+  running=false;
+  alert("Game error: "+error.message);
+ }
+}
+
+function restartGame(){
+ startGame();
+}
+
+document.getElementById("startBtn").addEventListener("click",showWelcome);
+document.getElementById("playNow").addEventListener("click",startGame);
+document.getElementById("restart").addEventListener("click",restartGame);
+document.getElementById("again").addEventListener("click",startGame);
+
+</script>
+</body>
+</html>
+ocument.getElementById("rank").textContent=
   sorted.indexOf(counts[0])+1;
 
  let board=document.getElementById("board");
